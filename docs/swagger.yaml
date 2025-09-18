@@ -1,0 +1,79 @@
+openapi: 3.0.3
+info:
+  title: AI Chatbot API
+  description: A simple chat API that interacts with AI models to process messages and return responses
+  version: 1.0.0
+  contact:
+    name: Harshal
+    email: support@example.com
+  license:
+    name: ISC
+
+servers:
+  - url: http://localhost:8000
+    description: Development server (Root routes)
+  - url: http://localhost:8000/api/v1
+    description: Development server (API routes)
+  - url: https://api.example.com
+    description: Production server (Root routes)
+  - url: https://api.example.com/api/v1
+    description: Production server (API routes)
+
+paths:
+  # All API paths are loaded from modular YAML files
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization header using the Bearer scheme
+
+  schemas:
+    # Base schemas that are shared across multiple modules
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+        status:
+          type: integer
+          description: HTTP status code
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of when the error occurred
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        message:
+          type: string
+        data:
+          type: object
+          description: Response data payload (varies by endpoint)
+
+    PaginatedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+        total:
+          type: integer
+          description: Total number of items
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of items per page
+        totalPages:
+          type: integer
+          description: Total number of pages

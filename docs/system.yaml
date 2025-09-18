@@ -1,0 +1,67 @@
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      description: Check the health status of the API (public endpoint - no authentication required)
+      security:
+        - {} # No security required
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                healthy:
+                  summary: Healthy response
+                  value:
+                    status: "healthy"
+                    timestamp: "2025-07-25T10:30:00.000Z"
+                    environment: "development"
+                    uptime: 1234.567
+                    memory:
+                      used: 45.2
+                      total: 128.5
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - environment
+        - uptime
+        - memory
+      properties:
+        status:
+          type: string
+          description: Health status
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: Current timestamp
+          example: "2025-07-25T10:30:00.000Z"
+        environment:
+          type: string
+          description: Current environment
+          example: "development"
+        uptime:
+          type: number
+          description: Server uptime in seconds
+          example: 1234.567
+        memory:
+          type: object
+          properties:
+            used:
+              type: number
+              description: Used memory in MB
+              example: 45.2
+            total:
+              type: number
+              description: Total memory in MB
+              example: 128.5
