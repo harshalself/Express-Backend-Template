@@ -1,15 +1,15 @@
-import { Router } from "express";
-import FileSourceController from "./file-source.controller";
-import { updateFileSourceSchema } from "./source.validation";
-import Route from "../../../interfaces/route.interface";
-import validationMiddleware from "../../../middlewares/validation.middleware";
+import { Router } from 'express';
+import FileSourceController from './file-source.controller';
+import { updateFileSourceSchema } from './source.validation';
+import Route from '../../../interfaces/route.interface';
+import validationMiddleware from '../../../middlewares/validation.middleware';
 import {
   uploadSingleFileMiddleware,
   uploadMultipleFilesMiddleware,
-} from "../../../middlewares/upload.middleware";
+} from '../../../middlewares/upload.middleware';
 
 class FileSourceRoute implements Route {
-  public path = "/sources/file";
+  public path = '/sources/file';
   public router = Router();
   public fileSourceController = new FileSourceController();
 
@@ -19,10 +19,7 @@ class FileSourceRoute implements Route {
 
   private initializeRoutes() {
     this.router.get(this.path, this.fileSourceController.getAllFileSources);
-    this.router.get(
-      `${this.path}/:id`,
-      this.fileSourceController.getFileSourceById
-    );
+    this.router.get(`${this.path}/:id`, this.fileSourceController.getFileSourceById);
 
     // Route for multipart/form-data file upload (recommended method)
     this.router.post(

@@ -1,10 +1,10 @@
-import fs from "fs";
-import winston from "winston";
-import winstonDaily from "winston-daily-rotate-file";
-import path from "path";
+import fs from 'fs';
+import winston from 'winston';
+import winstonDaily from 'winston-daily-rotate-file';
+import path from 'path';
 
 // logs dir (always at project root)
-const logDir = path.resolve(__dirname, "../../../logs");
+const logDir = path.resolve(__dirname, '../../../logs');
 
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
@@ -14,9 +14,7 @@ if (!fs.existsSync(logDir)) {
 const { combine, timestamp, printf } = winston.format;
 
 // Define log format
-const logFormat = printf(
-  ({ timestamp, level, message }) => `${timestamp} ${level}: ${message}`
-);
+const logFormat = printf(({ timestamp, level, message }) => `${timestamp} ${level}: ${message}`);
 
 /*
  * Log Level
@@ -25,16 +23,16 @@ const logFormat = printf(
 const logger = winston.createLogger({
   format: combine(
     timestamp({
-      format: "YYYY-MM-DD HH:mm:ss",
+      format: 'YYYY-MM-DD HH:mm:ss',
     }),
     logFormat
   ),
   transports: [
     // info log setting
     new winstonDaily({
-      level: "info",
-      datePattern: "YYYY-MM-DD",
-      dirname: logDir + "/info", // log file /logs/info/*.log in save
+      level: 'info',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/info', // log file /logs/info/*.log in save
       filename: `%DATE%.log`,
       maxFiles: 30, // 30 Days saved
       json: false,
@@ -42,9 +40,9 @@ const logger = winston.createLogger({
     }),
     // error log setting
     new winstonDaily({
-      level: "error",
-      datePattern: "YYYY-MM-DD",
-      dirname: logDir + "/error", // log file /logs/error/*.log in save
+      level: 'error',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/error', // log file /logs/error/*.log in save
       filename: `%DATE%.error.log`,
       maxFiles: 30, // 30 Days saved
       handleExceptions: true,
@@ -66,7 +64,7 @@ logger.add(
 
 const stream = {
   write: (message: string) => {
-    logger.info(message.substring(0, message.lastIndexOf("\n")));
+    logger.info(message.substring(0, message.lastIndexOf('\n')));
   },
 };
 

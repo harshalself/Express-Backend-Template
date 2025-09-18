@@ -1,15 +1,11 @@
-import { Router } from "express";
-import Route from "../../interfaces/route.interface";
-import validationMiddleware from "../../middlewares/validation.middleware";
-import UserController from "./user.controller";
-import {
-  createUserSchema,
-  updateUserSchema,
-  loginSchema,
-} from "./user.validation";
+import { Router } from 'express';
+import Route from '../../interfaces/route.interface';
+import validationMiddleware from '../../middlewares/validation.middleware';
+import UserController from './user.controller';
+import { createUserSchema, updateUserSchema, loginSchema } from './user.validation';
 
 class UserRoute implements Route {
-  public path = "/users";
+  public path = '/users';
   public router = Router();
   public userController = new UserController();
 

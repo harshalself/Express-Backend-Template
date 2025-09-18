@@ -13,9 +13,10 @@ export class AuthTestHelper {
     return await bcrypt.hash(password, 12);
   }
 
-  static async createTestUser(
-    userData: TestUser
-  ): Promise<{ user: { id: number; email: string; name: string }; token: string }> {
+  static async createTestUser(userData: TestUser): Promise<{
+    user: { id: number; email: string; name: string };
+    token: string;
+  }> {
     const hashedPassword = await this.hashPassword(userData.password);
 
     const [user] = await dbHelper
@@ -23,12 +24,11 @@ export class AuthTestHelper {
       .insert({
         ...userData,
         password: hashedPassword,
-        created_by: 1, // Use system user ID for tests
+        created_by: 1,
       })
       .returning('*');
 
     const token = this.generateJwtToken(user.id, user.email);
-
     return { user, token };
   }
 
@@ -39,7 +39,7 @@ export class AuthTestHelper {
   }> {
     const rawPassword = 'TestPassword123!';
     const userData = {
-      email: 'testuser@example.com',
+      email: `testuser.${Date.now()}@example.com`,
       password: rawPassword,
       name: 'Test User',
     };
@@ -49,14 +49,10 @@ export class AuthTestHelper {
   }
 
   static getAuthHeaders(token: string): { Authorization: string } {
-    return {
-      Authorization: `Bearer ${token}`,
-    };
+    return { Authorization: `Bearer ${token}` };
   }
 
-  static async verifyToken(
-    token: string
-  ): Promise<{ id: number; email: string; iat: number; exp: number }> {
+  static verifyToken(token: string): { id: number; email: string; iat: number; exp: number } {
     const secret = process.env.JWT_SECRET || 'test-jwt-secret';
     return jwt.verify(token, secret) as { id: number; email: string; iat: number; exp: number };
   }

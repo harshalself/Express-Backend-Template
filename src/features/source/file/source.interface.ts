@@ -44,10 +44,10 @@ export interface TextSourceUpdateInput {
 export interface Source {
   id: number;
   user_id: number;
-  source_type: "file" | "text";
+  source_type: 'file' | 'text';
   name: string;
   description?: string;
-  status: "pending" | "processing" | "completed" | "failed";
+  status: 'pending' | 'processing' | 'completed' | 'failed';
   is_embedded: boolean;
   created_by: number;
   created_at: Date;
@@ -61,7 +61,7 @@ export interface Source {
 // Input interface for creating a base source
 export interface SourceInput {
   user_id: number;
-  source_type: "file" | "text";
+  source_type: 'file' | 'text';
   name: string;
   description?: string;
 }
@@ -70,6 +70,6 @@ export interface SourceInput {
 export interface SourceUpdateInput {
   name?: string;
   description?: string;
-  status?: "pending" | "processing" | "completed" | "failed";
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
   is_embedded?: boolean;
 }

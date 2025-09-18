@@ -1,20 +1,16 @@
-import knex from "../../../database/index.schema";
-import {
-  Source,
-  SourceInput,
-  SourceUpdateInput,
-} from "./file/source.interface";
-import HttpException from "../../utils/HttpException";
-import { extractInsertedId } from "../../utils/fileupload";
+import knex from '../../../database/index.schema';
+import { Source, SourceInput, SourceUpdateInput } from './file/source.interface';
+import HttpException from '../../utils/HttpException';
+import { extractInsertedId } from '../../utils/fileupload';
 
 class BaseSourceService {
   // Generic source methods
   public async getAllSourcesByUserId(userId: number): Promise<Source[]> {
     try {
-      const sources = await knex("sources")
-        .where("user_id", userId)
-        .where("is_deleted", false)
-        .select("*");
+      const sources = await knex('sources')
+        .where('user_id', userId)
+        .where('is_deleted', false)
+        .select('*');
 
       return sources;
     } catch (error) {
@@ -24,13 +20,10 @@ class BaseSourceService {
 
   public async getSourceById(sourceId: number): Promise<Source> {
     try {
-      const source = await knex("sources")
-        .where("id", sourceId)
-        .where("is_deleted", false)
-        .first();
+      const source = await knex('sources').where('id', sourceId).where('is_deleted', false).first();
 
       if (!source) {
-        throw new HttpException(404, "Source not found");
+        throw new HttpException(404, 'Source not found');
       }
 
       return source;
@@ -42,17 +35,14 @@ class BaseSourceService {
 
   public async deleteSource(sourceId: number, userId: number): Promise<void> {
     try {
-      const source = await knex("sources")
-        .where("id", sourceId)
-        .where("is_deleted", false)
-        .first();
+      const source = await knex('sources').where('id', sourceId).where('is_deleted', false).first();
 
       if (!source) {
-        throw new HttpException(404, "Source not found");
+        throw new HttpException(404, 'Source not found');
       }
 
       // Use soft delete
-      await knex("sources").where("id", sourceId).update({
+      await knex('sources').where('id', sourceId).update({
         is_deleted: true,
         deleted_at: new Date(),
         deleted_by: userId,
@@ -63,24 +53,21 @@ class BaseSourceService {
     }
   }
 
-  public async createSource(
-    sourceData: SourceInput,
-    userId: number
-  ): Promise<Source> {
+  public async createSource(sourceData: SourceInput, userId: number): Promise<Source> {
     try {
-      const result = await knex("sources")
+      const result = await knex('sources')
         .insert({
           user_id: sourceData.user_id,
           source_type: sourceData.source_type,
           name: sourceData.name,
           description: sourceData.description,
-          status: "pending",
+          status: 'pending',
           is_embedded: false,
           created_by: userId,
           created_at: new Date(),
           updated_at: new Date(),
         })
-        .returning("id");
+        .returning('id');
 
       const sourceId = extractInsertedId(result);
       return await this.getSourceById(sourceId);
@@ -96,17 +83,14 @@ class BaseSourceService {
     userId: number
   ): Promise<Source> {
     try {
-      const source = await knex("sources")
-        .where("id", sourceId)
-        .where("is_deleted", false)
-        .first();
+      const source = await knex('sources').where('id', sourceId).where('is_deleted', false).first();
 
       if (!source) {
-        throw new HttpException(404, "Source not found");
+        throw new HttpException(404, 'Source not found');
       }
 
-      await knex("sources")
-        .where("id", sourceId)
+      await knex('sources')
+        .where('id', sourceId)
         .update({
           ...sourceData,
           updated_by: userId,

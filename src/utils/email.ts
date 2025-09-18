@@ -1,5 +1,5 @@
-import nodemailer from "nodemailer";
-import { logger } from "./logger";
+import nodemailer from 'nodemailer';
+import { logger } from './logger';
 
 interface Booking {
   name: string;
@@ -8,14 +8,10 @@ interface Booking {
   bookingId: string | number;
 }
 
-const sendEmail = async (
-  to: string,
-  ticketImagePath: string,
-  booking: Booking
-) => {
+const sendEmail = async (to: string, ticketImagePath: string, booking: Booking) => {
   try {
     const transporter = nodemailer.createTransporter({
-      service: process.env.EMAIL_SERVICE || "gmail",
+      service: process.env.EMAIL_SERVICE || 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
@@ -26,7 +22,7 @@ const sendEmail = async (
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: to,
-      subject: "Your Event Booking Confirmation",
+      subject: 'Your Event Booking Confirmation',
       text: `Dear ${booking.name},\n\nThank you for booking with us! Please find your ticket attached.\n\nEvent: ${booking.eventTitle}\nDate: ${booking.date}\n\nBest regards,\nYour Event Team`,
       html: `<p>Dear ${booking.name},</p>
                     <p>Thank you for booking with us! Please find your ticket attached.</p>
@@ -37,17 +33,17 @@ const sendEmail = async (
         {
           filename: `ticket_${booking.bookingId}.jpg`,
           path: ticketImagePath,
-          cid: "ticketimage@cid",
+          cid: 'ticketimage@cid',
         },
       ],
     };
 
     // Send the email
     await transporter.sendMail(mailOptions);
-    logger.info("Email sent successfully to:", to);
+    logger.info('Email sent successfully to:', to);
   } catch (error) {
-    logger.error("Error sending email:", error);
-    throw new Error("Error sending email");
+    logger.error('Error sending email:', error);
+    throw new Error('Error sending email');
   }
 };
 

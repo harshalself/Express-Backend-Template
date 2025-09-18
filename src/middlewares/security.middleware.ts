@@ -1,5 +1,5 @@
-import helmet from "helmet";
-import { Request, Response, NextFunction } from "express";
+import helmet from 'helmet';
+import { Request, Response, NextFunction } from 'express';
 
 // Enhanced security headers middleware
 export const securityMiddleware = [
@@ -10,7 +10,7 @@ export const securityMiddleware = [
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+        imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'"],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
@@ -29,11 +29,11 @@ export const securityMiddleware = [
   // Custom security headers
   (req: Request, res: Response, next: NextFunction) => {
     // Remove server information
-    res.removeHeader("X-Powered-By");
+    res.removeHeader('X-Powered-By');
 
     // Add custom security headers
-    res.setHeader("X-API-Version", "1.0");
-    res.setHeader("X-Response-Time", Date.now());
+    res.setHeader('X-API-Version', '1.0');
+    res.setHeader('X-Response-Time', Date.now());
 
     next();
   },

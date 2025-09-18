@@ -1,53 +1,40 @@
-import knex from "../../../../database/index.schema";
-import {
-  FileSource,
-  FileSourceInput,
-  FileSourceUpdateInput,
-} from "./source.interface";
-import HttpException from "../../../utils/HttpException";
-import { logger } from "../../../utils/logger";
-import {
-  extractInsertedId,
-  type FileUploadResult,
-} from "../../../utils/fileupload";
+import knex from '../../../../database/index.schema';
+import { FileSource, FileSourceInput, FileSourceUpdateInput } from './source.interface';
+import HttpException from '../../../utils/HttpException';
+import { logger } from '../../../utils/logger';
+import { extractInsertedId, type FileUploadResult } from '../../../utils/fileupload';
 
 class FileSourceService {
   public async getAllFileSources(userId: number): Promise<FileSource[]> {
     try {
-      const fileSources = await knex("sources")
-        .join("file_sources", "sources.id", "file_sources.source_id")
-        .where("sources.user_id", userId)
-        .where("sources.is_deleted", false)
-        .select("sources.*", "file_sources.*");
+      const fileSources = await knex('sources')
+        .join('file_sources', 'sources.id', 'file_sources.source_id')
+        .where('sources.user_id', userId)
+        .where('sources.is_deleted', false)
+        .select('sources.*', 'file_sources.*');
       return fileSources;
     } catch (error) {
-      throw new HttpException(
-        500,
-        `Error fetching file sources: ${error.message}`
-      );
+      throw new HttpException(500, `Error fetching file sources: ${error.message}`);
     }
   }
 
   public async getFileSourceById(sourceId: number): Promise<FileSource> {
     try {
-      const fileSource = await knex("sources")
-        .join("file_sources", "sources.id", "file_sources.source_id")
-        .where("sources.id", sourceId)
-        .where("sources.is_deleted", false)
-        .select("sources.*", "file_sources.*")
+      const fileSource = await knex('sources')
+        .join('file_sources', 'sources.id', 'file_sources.source_id')
+        .where('sources.id', sourceId)
+        .where('sources.is_deleted', false)
+        .select('sources.*', 'file_sources.*')
         .first();
 
       if (!fileSource) {
-        throw new HttpException(404, "File source not found");
+        throw new HttpException(404, 'File source not found');
       }
 
       return fileSource;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        500,
-        `Error fetching file source: ${error.message}`
-      );
+      throw new HttpException(500, `Error fetching file source: ${error.message}`);
     }
   }
 
@@ -56,10 +43,7 @@ class FileSourceService {
       return `users/${userId}/files`;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        500,
-        `Error getting folder path for user: ${error.message}`
-      );
+      throw new HttpException(500, `Error getting folder path for user: ${error.message}`);
     }
   }
 
@@ -70,45 +54,42 @@ class FileSourceService {
     uploadResult: FileUploadResult
   ): Promise<FileSource> {
     try {
-      return await knex.transaction(async (trx) => {
+      return await knex.transaction(async trx => {
         try {
-          const result = await trx("sources")
+          const result = await trx('sources')
             .insert({
               user_id: userId,
-              source_type: "file",
+              source_type: 'file',
               name: sourceName,
               description: sourceDescription,
-              status: "pending",
+              status: 'pending',
               is_embedded: false,
               created_by: userId,
               created_at: new Date(),
               updated_at: new Date(),
               is_deleted: false,
             })
-            .returning("id");
+            .returning('id');
 
           const sourceId = extractInsertedId(result);
 
-          const fileSourceInsert = await trx("file_sources").insert({
+          const fileSourceInsert = await trx('file_sources').insert({
             source_id: sourceId,
             file_url: uploadResult.Location,
-            mime_type: uploadResult.ContentType || "application/octet-stream",
+            mime_type: uploadResult.ContentType || 'application/octet-stream',
             file_size: uploadResult.size || 0,
             text_content: uploadResult.textContent || null,
           });
           if (!fileSourceInsert) {
-            throw new HttpException(
-              500,
-              "Failed to insert file_sources record"
-            );
+            throw new HttpException(500, 'Failed to insert file_sources record');
           }
 
           // Fetch the joined file source using the same transaction
-          const fileSource = await trx("sources")
-            .join("file_sources", "sources.id", "file_sources.source_id")
-            .where("sources.id", sourceId)
-            .where("sources.is_deleted", false)
-            .select("sources.*", "file_sources.*")
+          const fileSource = await trx('sources')
+            .join('file_sources', 'sources.id', 'file_sources.source_id')
+            .where('sources.id', sourceId)
+            .where('sources.is_deleted', false)
+            .select('sources.*', 'file_sources.*')
             .first();
           if (!fileSource) {
             throw new HttpException(
@@ -118,65 +99,56 @@ class FileSourceService {
           }
           return fileSource;
         } catch (err) {
-          logger.error(
-            "[DEBUG] Transaction error in createFileSourceFromUpload:",
-            err
-          );
+          logger.error('[DEBUG] Transaction error in createFileSourceFromUpload:', err);
           throw err;
         }
       });
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        500,
-        `Error creating file source from upload: ${error.message}`
-      );
+      throw new HttpException(500, `Error creating file source from upload: ${error.message}`);
     }
   }
 
-  public async createFileSource(
-    sourceData: FileSourceInput,
-    userId: number
-  ): Promise<FileSource> {
+  public async createFileSource(sourceData: FileSourceInput, userId: number): Promise<FileSource> {
     try {
       if (!sourceData) {
-        throw new HttpException(400, "Source data is empty");
+        throw new HttpException(400, 'Source data is empty');
       }
 
       // First check if source exists
-      const source = await knex("sources")
-        .where("id", sourceData.source_id)
-        .where("is_deleted", false)
+      const source = await knex('sources')
+        .where('id', sourceData.source_id)
+        .where('is_deleted', false)
         .first();
 
       if (!source) {
-        throw new HttpException(404, "Source not found");
+        throw new HttpException(404, 'Source not found');
       }
 
-      const fileSourceInsert = await knex("file_sources").insert({
+      const fileSourceInsert = await knex('file_sources').insert({
         source_id: sourceData.source_id,
         file_url: sourceData.file_url,
-        mime_type: sourceData.mime_type || "application/octet-stream",
+        mime_type: sourceData.mime_type || 'application/octet-stream',
         file_size: sourceData.file_size || 0,
         text_content: sourceData.text_content,
       });
 
       if (!fileSourceInsert) {
-        throw new HttpException(500, "Failed to insert file_sources record");
+        throw new HttpException(500, 'Failed to insert file_sources record');
       }
 
       // Update the source table
-      await knex("sources").where("id", sourceData.source_id).update({
+      await knex('sources').where('id', sourceData.source_id).update({
         updated_by: userId,
         updated_at: new Date(),
       });
 
       // Fetch the joined file source after insert
-      const fileSource = await knex("sources")
-        .join("file_sources", "sources.id", "file_sources.source_id")
-        .where("sources.id", sourceData.source_id)
-        .where("sources.is_deleted", false)
-        .select("sources.*", "file_sources.*")
+      const fileSource = await knex('sources')
+        .join('file_sources', 'sources.id', 'file_sources.source_id')
+        .where('sources.id', sourceData.source_id)
+        .where('sources.is_deleted', false)
+        .select('sources.*', 'file_sources.*')
         .first();
 
       if (!fileSource) {
@@ -189,10 +161,7 @@ class FileSourceService {
       return fileSource;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        500,
-        `Failed to create file source: ${error.message}`
-      );
+      throw new HttpException(500, `Failed to create file source: ${error.message}`);
     }
   }
 
@@ -203,24 +172,24 @@ class FileSourceService {
   ): Promise<FileSource> {
     try {
       if (!sourceData) {
-        throw new HttpException(400, "Source data is empty");
+        throw new HttpException(400, 'Source data is empty');
       }
 
       // Check if source exists
-      const source = await knex("sources")
-        .join("file_sources", "sources.id", "file_sources.source_id")
-        .where("sources.id", sourceId)
-        .where("sources.is_deleted", false)
+      const source = await knex('sources')
+        .join('file_sources', 'sources.id', 'file_sources.source_id')
+        .where('sources.id', sourceId)
+        .where('sources.is_deleted', false)
         .first();
 
       if (!source) {
-        throw new HttpException(404, "File source not found");
+        throw new HttpException(404, 'File source not found');
       }
 
       // Start transaction
-      return await knex.transaction(async (trx) => {
+      return await knex.transaction(async trx => {
         // Update sources table with audit fields
-        await trx("sources").where("id", sourceId).update({
+        await trx('sources').where('id', sourceId).update({
           updated_by: userId,
           updated_at: new Date(),
         });
@@ -229,15 +198,12 @@ class FileSourceService {
         const updateData: Partial<FileSourceUpdateInput> = {};
         if (sourceData.file_url) updateData.file_url = sourceData.file_url;
         if (sourceData.mime_type) updateData.mime_type = sourceData.mime_type;
-        if (sourceData.file_size !== undefined)
-          updateData.file_size = sourceData.file_size;
+        if (sourceData.file_size !== undefined) updateData.file_size = sourceData.file_size;
         if (sourceData.text_content !== undefined)
           updateData.text_content = sourceData.text_content;
 
         if (Object.keys(updateData).length > 0) {
-          await trx("file_sources")
-            .where("source_id", sourceId)
-            .update(updateData);
+          await trx('file_sources').where('source_id', sourceId).update(updateData);
         }
 
         // Get the updated file source
@@ -245,10 +211,7 @@ class FileSourceService {
       });
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        500,
-        `Error updating file source: ${error.message}`
-      );
+      throw new HttpException(500, `Error updating file source: ${error.message}`);
     }
   }
 
@@ -260,48 +223,48 @@ class FileSourceService {
   ): Promise<FileSource[]> {
     try {
       if (!uploadResults || uploadResults.length === 0) {
-        throw new HttpException(400, "No files provided");
+        throw new HttpException(400, 'No files provided');
       }
 
       // Insert and fetch all file sources in a single transaction
-      return await knex.transaction(async (trx) => {
+      return await knex.transaction(async trx => {
         const fileSources = [];
         for (let i = 0; i < uploadResults.length; i++) {
           const uploadResult = uploadResults[i];
           const name = names[i];
           const description = descriptions?.[i];
 
-          const sourceResult = await trx("sources")
+          const sourceResult = await trx('sources')
             .insert({
               user_id: userId,
-              source_type: "file",
+              source_type: 'file',
               name: name,
               description: description,
-              status: "pending",
+              status: 'pending',
               is_embedded: false,
               created_by: userId,
               created_at: new Date(),
               updated_at: new Date(),
               is_deleted: false,
             })
-            .returning("id");
+            .returning('id');
 
           const sourceId = extractInsertedId(sourceResult);
 
-          await trx("file_sources").insert({
+          await trx('file_sources').insert({
             source_id: sourceId,
             file_url: uploadResult.Location,
-            mime_type: uploadResult.ContentType || "application/octet-stream",
+            mime_type: uploadResult.ContentType || 'application/octet-stream',
             file_size: uploadResult.size || 0,
             text_content: uploadResult.textContent || null,
           });
 
           // Fetch the joined file source using the same transaction
-          const fileSource = await trx("sources")
-            .join("file_sources", "sources.id", "file_sources.source_id")
-            .where("sources.id", sourceId)
-            .where("sources.is_deleted", false)
-            .select("sources.*", "file_sources.*")
+          const fileSource = await trx('sources')
+            .join('file_sources', 'sources.id', 'file_sources.source_id')
+            .where('sources.id', sourceId)
+            .where('sources.is_deleted', false)
+            .select('sources.*', 'file_sources.*')
             .first();
           if (!fileSource) {
             throw new HttpException(

@@ -1,23 +1,23 @@
-import DB from "./index.schema";
-import { seeds } from "./seeds";
-import { logger } from "../src/utils/logger";
+import DB from './index.schema';
+import { seeds } from './seeds';
+import { logger } from '../src/utils/logger';
 
-export const FILE_SOURCES_TABLE = "file_sources";
+export const FILE_SOURCES_TABLE = 'file_sources';
 
 // Schema Definition
 export const createTable = async () => {
-  await DB.schema.createTable(FILE_SOURCES_TABLE, (table) => {
-    table.increments("id").primary();
+  await DB.schema.createTable(FILE_SOURCES_TABLE, table => {
+    table.increments('id').primary();
     table
-      .integer("source_id")
+      .integer('source_id')
       .notNullable()
-      .references("id")
-      .inTable("sources")
-      .onDelete("CASCADE");
-    table.text("file_url").notNullable();
-    table.text("mime_type").nullable();
-    table.bigInteger("file_size").defaultTo(0);
-    table.text("text_content").nullable(); // Store extracted text content for vector embeddings
+      .references('id')
+      .inTable('sources')
+      .onDelete('CASCADE');
+    table.text('file_url').notNullable();
+    table.text('mime_type').nullable();
+    table.bigInteger('file_size').defaultTo(0);
+    table.text('text_content').nullable(); // Store extracted text content for vector embeddings
   });
 
   // Create the update_timestamp trigger with table-specific name
@@ -44,8 +44,8 @@ export const seedTable = async () => {
 
 // For individual table migration (when run directly)
 if (require.main === module) {
-  const dropFirst = process.argv.includes("--drop");
-  const skipSeed = process.argv.includes("--no-seed");
+  const dropFirst = process.argv.includes('--drop');
+  const skipSeed = process.argv.includes('--no-seed');
 
   (async () => {
     try {
@@ -62,8 +62,8 @@ if (require.main === module) {
       }
 
       logger.info(
-        `${FILE_SOURCES_TABLE} table ${dropFirst ? "recreated" : "created"}${
-          skipSeed ? "" : " and seeded"
+        `${FILE_SOURCES_TABLE} table ${dropFirst ? 'recreated' : 'created'}${
+          skipSeed ? '' : ' and seeded'
         }`
       );
       process.exit(0);

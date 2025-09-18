@@ -1,68 +1,52 @@
-import { NextFunction, Request, Response } from "express";
-import { CreateTextSource, UpdateTextSource } from "../file/source.validation";
-import TextSourceService from "./text-source.service";
-import { RequestWithUser } from "../../../interfaces/auth.interface";
-import HttpException from "../../../utils/HttpException";
+import { NextFunction, Request, Response } from 'express';
+import { CreateTextSource, UpdateTextSource } from '../file/source.validation';
+import TextSourceService from './text-source.service';
+import { RequestWithUser } from '../../../interfaces/auth.interface';
+import HttpException from '../../../utils/HttpException';
 
 class TextSourceController {
   public textSourceService = new TextSourceService();
 
-  public getAllTextSources = async (
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ) => {
+  public getAllTextSources = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const userId = req.userId || req.user?.id;
 
       if (!userId) {
-        throw new HttpException(401, "User authentication required");
+        throw new HttpException(401, 'User authentication required');
       }
 
-      const textSources = await this.textSourceService.getAllTextSources(
-        userId
-      );
+      const textSources = await this.textSourceService.getAllTextSources(userId);
 
       res.status(200).json({
         data: textSources,
-        message: "Text sources retrieved successfully",
+        message: 'Text sources retrieved successfully',
       });
     } catch (error) {
       next(error);
     }
   };
 
-  public getTextSourceById = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  public getTextSourceById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const sourceId = Number(req.params.id);
-      const textSource = await this.textSourceService.getTextSourceById(
-        sourceId
-      );
+      const textSource = await this.textSourceService.getTextSourceById(sourceId);
 
       res.status(200).json({
         data: textSource,
-        message: "Text source retrieved successfully",
+        message: 'Text source retrieved successfully',
       });
     } catch (error) {
       next(error);
     }
   };
 
-  public createTextSource = async (
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ) => {
+  public createTextSource = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const textSourceData: CreateTextSource = req.body;
       const userId = req.userId || req.user?.id;
 
       if (!userId) {
-        throw new HttpException(401, "User authentication required");
+        throw new HttpException(401, 'User authentication required');
       }
 
       const textSource = await this.textSourceService.createTextSource(
@@ -75,25 +59,21 @@ class TextSourceController {
 
       res.status(201).json({
         data: textSource,
-        message: "Text source created successfully",
+        message: 'Text source created successfully',
       });
     } catch (error) {
       next(error);
     }
   };
 
-  public updateTextSource = async (
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ) => {
+  public updateTextSource = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const sourceId = Number(req.params.id);
       const textSourceData: UpdateTextSource = req.body;
       const userId = req.userId || req.user?.id;
 
       if (!userId) {
-        throw new HttpException(401, "User authentication required");
+        throw new HttpException(401, 'User authentication required');
       }
 
       const updatedTextSource = await this.textSourceService.updateTextSource(
@@ -104,7 +84,7 @@ class TextSourceController {
 
       res.status(200).json({
         data: updatedTextSource,
-        message: "Text source updated successfully",
+        message: 'Text source updated successfully',
       });
     } catch (error) {
       next(error);

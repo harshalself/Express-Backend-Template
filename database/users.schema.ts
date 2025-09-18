@@ -1,8 +1,8 @@
-import DB from "./index.schema";
-import { seeds } from "./seeds";
-import { logger } from "../src/utils/logger";
+import DB from './index.schema';
+import { seeds } from './seeds';
+import { logger } from '../src/utils/logger';
 
-export const USERS_TABLE = "users";
+export const USERS_TABLE = 'users';
 
 // Schema Definition
 export const createTable = async () => {
@@ -19,19 +19,19 @@ export const createTable = async () => {
   `);
 
   // Create users table
-  await DB.schema.createTable(USERS_TABLE, (table) => {
-    table.increments("id").primary();
-    table.text("name").notNullable();
-    table.text("email").unique().notNullable();
-    table.text("password").notNullable();
-    table.text("phone_number").nullable();
-    table.integer("created_by").notNullable();
-    table.timestamp("created_at").defaultTo(DB.fn.now());
-    table.integer("updated_by").nullable();
-    table.timestamp("updated_at").defaultTo(DB.fn.now());
-    table.boolean("is_deleted").defaultTo(false);
-    table.integer("deleted_by").nullable();
-    table.timestamp("deleted_at").nullable();
+  await DB.schema.createTable(USERS_TABLE, table => {
+    table.increments('id').primary();
+    table.text('name').notNullable();
+    table.text('email').unique().notNullable();
+    table.text('password').notNullable();
+    table.text('phone_number').nullable();
+    table.integer('created_by').notNullable();
+    table.timestamp('created_at').defaultTo(DB.fn.now());
+    table.integer('updated_by').nullable();
+    table.timestamp('updated_at').defaultTo(DB.fn.now());
+    table.boolean('is_deleted').defaultTo(false);
+    table.integer('deleted_by').nullable();
+    table.timestamp('deleted_at').nullable();
   });
 
   // Create the update_timestamp trigger
@@ -58,8 +58,8 @@ export const seedTable = async () => {
 
 // For individual table migration (when run directly)
 if (require.main === module) {
-  const dropFirst = process.argv.includes("--drop");
-  const skipSeed = process.argv.includes("--no-seed");
+  const dropFirst = process.argv.includes('--drop');
+  const skipSeed = process.argv.includes('--no-seed');
 
   (async () => {
     try {
@@ -76,8 +76,8 @@ if (require.main === module) {
       }
 
       logger.info(
-        `${USERS_TABLE} table ${dropFirst ? "recreated" : "created"}${
-          skipSeed ? "" : " and seeded"
+        `${USERS_TABLE} table ${dropFirst ? 'recreated' : 'created'}${
+          skipSeed ? '' : ' and seeded'
         }`
       );
       process.exit(0);

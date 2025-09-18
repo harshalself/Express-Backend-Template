@@ -1,34 +1,29 @@
-import DB from "./index.schema";
-import { seeds } from "./seeds";
-import { logger } from "../src/utils/logger";
+import DB from './index.schema';
+import { seeds } from './seeds';
+import { logger } from '../src/utils/logger';
 
-export const SOURCES_TABLE = "sources";
+export const SOURCES_TABLE = 'sources';
 
 // Schema Definition
 export const createTable = async () => {
-  await DB.schema.createTable(SOURCES_TABLE, (table) => {
-    table.increments("id").primary();
+  await DB.schema.createTable(SOURCES_TABLE, table => {
+    table.increments('id').primary();
+    table.integer('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
+    table.text('source_type').notNullable().checkIn(['file', 'text']);
+    table.string('name').notNullable();
+    table.text('description').nullable();
     table
-      .integer("user_id")
-      .notNullable()
-      .references("id")
-      .inTable("users")
-      .onDelete("CASCADE");
-    table.text("source_type").notNullable().checkIn(["file", "text"]);
-    table.string("name").notNullable();
-    table.text("description").nullable();
-    table
-      .text("status")
-      .defaultTo("pending")
-      .checkIn(["pending", "processing", "completed", "failed"]);
-    table.boolean("is_embedded").defaultTo(false); // Track if content is vectorized
-    table.integer("created_by").notNullable();
-    table.timestamp("created_at").defaultTo(DB.fn.now());
-    table.integer("updated_by").nullable();
-    table.timestamp("updated_at").defaultTo(DB.fn.now());
-    table.boolean("is_deleted").defaultTo(false);
-    table.integer("deleted_by").nullable();
-    table.timestamp("deleted_at").nullable();
+      .text('status')
+      .defaultTo('pending')
+      .checkIn(['pending', 'processing', 'completed', 'failed']);
+    table.boolean('is_embedded').defaultTo(false); // Track if content is vectorized
+    table.integer('created_by').notNullable();
+    table.timestamp('created_at').defaultTo(DB.fn.now());
+    table.integer('updated_by').nullable();
+    table.timestamp('updated_at').defaultTo(DB.fn.now());
+    table.boolean('is_deleted').defaultTo(false);
+    table.integer('deleted_by').nullable();
+    table.timestamp('deleted_at').nullable();
   });
 
   // Create the update_timestamp trigger
@@ -43,7 +38,7 @@ export const createTable = async () => {
 // Drop Table (handles dependencies)
 export const dropTable = async () => {
   // Drop all dependent tables first
-  const dependentTables = ["file_sources", "text_sources"];
+  const dependentTables = ['file_sources', 'text_sources'];
 
   for (const table of dependentTables) {
     logger.info(`Dropping dependent table: ${table}...`);
@@ -64,8 +59,8 @@ export const seedTable = async () => {
 
 // For individual table migration (when run directly)
 if (require.main === module) {
-  const dropFirst = process.argv.includes("--drop");
-  const skipSeed = process.argv.includes("--no-seed");
+  const dropFirst = process.argv.includes('--drop');
+  const skipSeed = process.argv.includes('--no-seed');
 
   (async () => {
     try {
@@ -82,8 +77,8 @@ if (require.main === module) {
       }
 
       logger.info(
-        `${SOURCES_TABLE} table ${dropFirst ? "recreated" : "created"}${
-          skipSeed ? "" : " and seeded"
+        `${SOURCES_TABLE} table ${dropFirst ? 'recreated' : 'created'}${
+          skipSeed ? '' : ' and seeded'
         }`
       );
       process.exit(0);

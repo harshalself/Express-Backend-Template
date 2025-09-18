@@ -1,14 +1,14 @@
-import DB from "./index.schema";
-import { seeds } from "./seeds";
-import { logger } from "../src/utils/logger";
+import DB from './index.schema';
+import { seeds } from './seeds';
+import { logger } from '../src/utils/logger';
 
 // Import schema modules
-import * as Users from "./users.schema";
-import * as Sources from "./sources.schema";
-import * as FileSources from "./file_sources.schema";
-import * as TextSources from "./text_sources.schema";
+import * as Users from './users.schema';
+import * as Sources from './sources.schema';
+import * as FileSources from './file_sources.schema';
+import * as TextSources from './text_sources.schema';
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Helper function to drop a table
 const dropTable = async (
@@ -41,73 +41,59 @@ const createAndSeedTable = async (
 
 export const migrateAll = async (dropFirst = false, doSeed = true) => {
   try {
-    logger.info("Starting database migration and seeding...\n");
+    logger.info('Starting database migration and seeding...\n');
 
     if (dropFirst) {
-      logger.info("🗑️  Dropping all tables in reverse dependency order...\n");
+      logger.info('🗑️  Dropping all tables in reverse dependency order...\n');
       // Level 2: Drop sources and source types
-      logger.info("Level 2: Dropping source type tables...");
+      logger.info('Level 2: Dropping source type tables...');
       await Promise.all([
-        dropTable(TextSources, "text_sources"),
-        dropTable(FileSources, "file_sources"),
+        dropTable(TextSources, 'text_sources'),
+        dropTable(FileSources, 'file_sources'),
       ]);
-      logger.info("✓ Source type tables dropped");
+      logger.info('✓ Source type tables dropped');
 
       // Drop sources table
-      await dropTable(Sources, "sources");
-      logger.info("✓ Sources table dropped\n");
+      await dropTable(Sources, 'sources');
+      logger.info('✓ Sources table dropped\n');
 
       // Small delay to ensure cleanup
       await sleep(1000);
 
       // Level 1: Drop base tables last
-      logger.info("Level 1: Dropping base tables...");
-      await dropTable(Users, "users");
-      logger.info("✓ Users table dropped\n");
+      logger.info('Level 1: Dropping base tables...');
+      await dropTable(Users, 'users');
+      logger.info('✓ Users table dropped\n');
 
-      logger.info("🎯 All tables dropped successfully!\n");
+      logger.info('🎯 All tables dropped successfully!\n');
     }
 
     // Now create tables in correct dependency order
-    logger.info("🏗️  Creating all tables in dependency order...\n");
+    logger.info('🏗️  Creating all tables in dependency order...\n');
 
     // Level 1: Base Tables
-    logger.info("Level 1: Creating base tables...");
-    await createAndSeedTable(Users, "users", seeds.users, doSeed);
-    logger.info(`✓ Users table created${doSeed ? " and seeded" : ""}\n`);
+    logger.info('Level 1: Creating base tables...');
+    await createAndSeedTable(Users, 'users', seeds.users, doSeed);
+    logger.info(`✓ Users table created${doSeed ? ' and seeded' : ''}\n`);
 
     // Small delay to ensure foreign keys are ready
     await sleep(1000);
 
     // Level 2: Sources and source types
-    logger.info("Level 2: Creating sources and source types...");
-    await createAndSeedTable(Sources, "sources", seeds.sources, doSeed);
-    logger.info(`✓ Sources table created${doSeed ? " and seeded" : ""}`);
+    logger.info('Level 2: Creating sources and source types...');
+    await createAndSeedTable(Sources, 'sources', seeds.sources, doSeed);
+    logger.info(`✓ Sources table created${doSeed ? ' and seeded' : ''}`);
 
     // Create all source type tables in parallel
     await Promise.all([
-      createAndSeedTable(
-        FileSources,
-        "file_sources",
-        seeds.fileSources,
-        doSeed
-      ),
-      createAndSeedTable(
-        TextSources,
-        "text_sources",
-        seeds.textSources,
-        doSeed
-      ),
+      createAndSeedTable(FileSources, 'file_sources', seeds.fileSources, doSeed),
+      createAndSeedTable(TextSources, 'text_sources', seeds.textSources, doSeed),
     ]);
-    logger.info(
-      `✓ All source type tables created${doSeed ? " and seeded" : ""}\n`
-    );
+    logger.info(`✓ All source type tables created${doSeed ? ' and seeded' : ''}\n`);
 
-    logger.info(
-      "✨ All database migrations and seeding completed successfully!"
-    );
+    logger.info('✨ All database migrations and seeding completed successfully!');
   } catch (error) {
-    logger.error("Error during migration:", error);
+    logger.error('Error during migration:', error);
     throw error;
   }
 };
@@ -116,15 +102,15 @@ export const migrateAll = async (dropFirst = false, doSeed = true) => {
 
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const dropFirst = args.includes("--drop");
-  const noSeed = args.includes("--no-seed");
+  const dropFirst = args.includes('--drop');
+  const noSeed = args.includes('--no-seed');
   migrateAll(dropFirst, !noSeed)
     .then(() => {
-      logger.info("Migration and seeding completed");
+      logger.info('Migration and seeding completed');
       process.exit(0);
     })
-    .catch((error) => {
-      logger.error("Error during migration and seeding:", error);
+    .catch(error => {
+      logger.error('Error during migration and seeding:', error);
       process.exit(1);
     });
 }

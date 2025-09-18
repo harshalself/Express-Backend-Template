@@ -8,10 +8,10 @@
  * npx ts-node docs/validate-swagger.ts
  */
 
-import path from "path";
-import fs from "fs";
-import YAML from "yamljs";
-import { logger } from "../src/utils/logger";
+import path from 'path';
+import fs from 'fs';
+import YAML from 'yamljs';
+import { logger } from '../src/utils/logger';
 
 interface ModuleInfo {
   name: string;
@@ -42,11 +42,11 @@ class SwaggerValidator {
 
   private loadMainSwagger(): void {
     try {
-      const swaggerPath = path.join(this.docsDir, "swagger.yaml");
+      const swaggerPath = path.join(this.docsDir, 'swagger.yaml');
       this.swaggerDocument = YAML.load(swaggerPath);
-      logger.info("✅ Main swagger.yaml loaded successfully");
+      logger.info('✅ Main swagger.yaml loaded successfully');
     } catch (error) {
-      logger.error("❌ Failed to load main swagger.yaml:", error);
+      logger.error('❌ Failed to load main swagger.yaml:', error);
     }
   }
 
@@ -55,15 +55,15 @@ class SwaggerValidator {
       // Get all yaml files in the docs directory
       const files = fs
         .readdirSync(this.docsDir)
-        .filter((file) => file.endsWith(".yaml") && file !== "swagger.yaml");
+        .filter(file => file.endsWith('.yaml') && file !== 'swagger.yaml');
 
       // Load each module
-      files.forEach((file) => {
+      files.forEach(file => {
         try {
           const modulePath = path.join(this.docsDir, file);
           const moduleDoc = YAML.load(modulePath);
           this.modules.push({
-            name: file.replace(".yaml", ""),
+            name: file.replace('.yaml', ''),
             path: file,
             doc: moduleDoc,
           });
@@ -75,7 +75,7 @@ class SwaggerValidator {
 
       logger.info(`Found ${this.modules.length} API documentation modules`);
     } catch (error) {
-      logger.error("Failed to detect modules:", error);
+      logger.error('Failed to detect modules:', error);
     }
   }
 
@@ -89,24 +89,20 @@ class SwaggerValidator {
 
   private validateMainSwagger(): void {
     if (!this.swaggerDocument) {
-      logger.error("❌ Main swagger.yaml not loaded");
+      logger.error('❌ Main swagger.yaml not loaded');
       return;
     }
 
     // Check base structure
-    const requiredFields = ["openapi", "info", "paths", "components"];
+    const requiredFields = ['openapi', 'info', 'paths', 'components'];
     const missingFields = requiredFields.filter(
-      (field) => !(this.swaggerDocument as Record<string, unknown>)[field]
+      field => !(this.swaggerDocument as Record<string, unknown>)[field]
     );
 
     if (missingFields.length > 0) {
-      logger.warn(
-        `❌ Main swagger.yaml is missing required fields: ${missingFields.join(
-          ", "
-        )}`
-      );
+      logger.warn(`❌ Main swagger.yaml is missing required fields: ${missingFields.join(', ')}`);
     } else {
-      logger.info("✅ Main swagger.yaml has all required top-level fields");
+      logger.info('✅ Main swagger.yaml has all required top-level fields');
     }
 
     // Check if paths is empty (as expected in our modular approach)
@@ -116,17 +112,17 @@ class SwaggerValidator {
         `⚠️ Main swagger.yaml contains ${pathCount} paths that should be in module files`
       );
     } else {
-      logger.info("✅ Main swagger.yaml has empty paths section as expected");
+      logger.info('✅ Main swagger.yaml has empty paths section as expected');
     }
   }
 
   private validateModules(): void {
     if (this.modules.length === 0) {
-      logger.warn("❌ No API documentation modules detected");
+      logger.warn('❌ No API documentation modules detected');
       return;
     }
 
-    this.modules.forEach((module) => {
+    this.modules.forEach(module => {
       if (!module.doc) {
         logger.warn(`❌ Module ${module.name} could not be parsed`);
         return;
@@ -142,14 +138,10 @@ class SwaggerValidator {
 
       // Check if module has components
       if (!module.doc.components || !module.doc.components.schemas) {
-        logger.warn(
-          `⚠️ Module ${module.name} has no component schemas defined`
-        );
+        logger.warn(`⚠️ Module ${module.name} has no component schemas defined`);
       } else {
         const schemaCount = Object.keys(module.doc.components.schemas).length;
-        logger.info(
-          `✅ Module ${module.name} has ${schemaCount} schemas defined`
-        );
+        logger.info(`✅ Module ${module.name} has ${schemaCount} schemas defined`);
       }
     });
   }
@@ -158,10 +150,10 @@ class SwaggerValidator {
     const pathMap = new Map<string, string[]>();
 
     // Collect paths from all modules
-    this.modules.forEach((module) => {
+    this.modules.forEach(module => {
       if (!module.doc || !module.doc.paths) return;
 
-      Object.keys(module.doc.paths).forEach((path) => {
+      Object.keys(module.doc.paths).forEach(path => {
         if (!pathMap.has(path)) {
           pathMap.set(path, []);
         }
@@ -173,17 +165,13 @@ class SwaggerValidator {
     let hasDuplicates = false;
     pathMap.forEach((modules, path) => {
       if (modules.length > 1) {
-        logger.warn(
-          `❌ Path "${path}" is defined in multiple modules: ${modules.join(
-            ", "
-          )}`
-        );
+        logger.warn(`❌ Path "${path}" is defined in multiple modules: ${modules.join(', ')}`);
         hasDuplicates = true;
       }
     });
 
     if (!hasDuplicates) {
-      logger.info("✅ No duplicate paths found across modules");
+      logger.info('✅ No duplicate paths found across modules');
     }
   }
 
@@ -191,15 +179,15 @@ class SwaggerValidator {
     // Collect all referenced schemas
     const referencedSchemas = new Set<string>();
 
-    this.modules.forEach((module) => {
+    this.modules.forEach(module => {
       if (!module.doc || !module.doc.paths) return;
 
       // Function to extract $ref values recursively
       const extractRefs = (obj: unknown): void => {
-        if (!obj || typeof obj !== "object") return;
+        if (!obj || typeof obj !== 'object') return;
 
         const objRecord = obj as Record<string, unknown>;
-        if (objRecord.$ref && typeof objRecord.$ref === "string") {
+        if (objRecord.$ref && typeof objRecord.$ref === 'string') {
           // Extract schema name from "#/components/schemas/SchemaName"
           const match = objRecord.$ref.match(/#\/components\/schemas\/(\w+)/);
           if (match && match[1]) {
@@ -208,7 +196,7 @@ class SwaggerValidator {
         }
 
         // Process all properties
-        Object.values(objRecord).forEach((value) => extractRefs(value));
+        Object.values(objRecord).forEach(value => extractRefs(value));
       };
 
       // Extract from paths
@@ -220,23 +208,21 @@ class SwaggerValidator {
 
     // Add schemas from main swagger
     if (this.swaggerDocument?.components?.schemas) {
-      Object.keys(this.swaggerDocument.components.schemas).forEach((schema) =>
+      Object.keys(this.swaggerDocument.components.schemas).forEach(schema =>
         definedSchemas.add(schema)
       );
     }
 
     // Add schemas from modules
-    this.modules.forEach((module) => {
+    this.modules.forEach(module => {
       if (!module.doc?.components?.schemas) return;
 
-      Object.keys(module.doc.components.schemas).forEach((schema) =>
-        definedSchemas.add(schema)
-      );
+      Object.keys(module.doc.components.schemas).forEach(schema => definedSchemas.add(schema));
     });
 
     // Find missing schemas
     const missingSchemas: string[] = [];
-    referencedSchemas.forEach((schema) => {
+    referencedSchemas.forEach(schema => {
       if (!definedSchemas.has(schema)) {
         missingSchemas.push(schema);
       }
@@ -246,20 +232,16 @@ class SwaggerValidator {
       logger.warn(
         `❌ Found ${
           missingSchemas.length
-        } referenced schemas that are not defined: ${missingSchemas.join(", ")}`
+        } referenced schemas that are not defined: ${missingSchemas.join(', ')}`
       );
     } else {
-      logger.info(
-        `✅ All ${referencedSchemas.size} referenced schemas are properly defined`
-      );
+      logger.info(`✅ All ${referencedSchemas.size} referenced schemas are properly defined`);
     }
   }
 
   private summarize(): void {
-    console.log("\n=== Swagger Documentation Validation Summary ===");
-    console.log(
-      `Main swagger.yaml: ${this.swaggerDocument ? "✅ Valid" : "❌ Invalid"}`
-    );
+    console.log('\n=== Swagger Documentation Validation Summary ===');
+    console.log(`Main swagger.yaml: ${this.swaggerDocument ? '✅ Valid' : '❌ Invalid'}`);
     console.log(`API Modules: ${this.modules.length} detected`);
 
     const totalPaths = this.modules.reduce((count, module) => {
@@ -272,15 +254,11 @@ class SwaggerValidator {
     }, 0);
     console.log(`Total Schemas: ${totalSchemas}`);
 
-    console.log("\nModules Status:");
-    this.modules.forEach((module) => {
+    console.log('\nModules Status:');
+    this.modules.forEach(module => {
       const pathCount = Object.keys(module.doc?.paths || {}).length;
-      const schemaCount = Object.keys(
-        module.doc?.components?.schemas || {}
-      ).length;
-      console.log(
-        `- ${module.name}: ${pathCount} paths, ${schemaCount} schemas`
-      );
+      const schemaCount = Object.keys(module.doc?.components?.schemas || {}).length;
+      console.log(`- ${module.name}: ${pathCount} paths, ${schemaCount} schemas`);
     });
 
     console.log("\nRun with 'npx ts-node docs/validate-swagger.ts'");

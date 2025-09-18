@@ -1,14 +1,14 @@
-import swaggerUi from "swagger-ui-express";
-import YAML from "yamljs";
-import fs from "fs";
-import path from "path";
-import { Application } from "express";
-import { logger } from "../src/utils/logger";
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
+import fs from 'fs';
+import path from 'path';
+import { Application } from 'express';
+import { logger } from '../src/utils/logger';
 import {
   SwaggerDocument,
   SwaggerRequestType,
   SwaggerResponseType,
-} from "../src/interfaces/swagger.interface";
+} from '../src/interfaces/swagger.interface';
 
 /**
  * Swagger Configuration Module
@@ -28,62 +28,45 @@ class SwaggerConfig {
   private loadSwaggerDocument(): void {
     try {
       // Enhanced YAML parse error logging for main swagger.yaml
-      const swaggerPath = path.join(__dirname, "swagger.yaml");
+      const swaggerPath = path.join(__dirname, 'swagger.yaml');
       try {
         this.swaggerDocument = YAML.load(swaggerPath);
       } catch (err: unknown) {
         const error = err as Error & {
           mark?: { name?: string; line: number; column: number };
         };
-        logger.error("YAML Parse Error in swagger.yaml:", error.message);
+        logger.error('YAML Parse Error in swagger.yaml:', error.message);
         if (error.mark) {
           logger.error(
-            `At ${error.mark.name || "swagger.yaml"} line ${
+            `At ${error.mark.name || 'swagger.yaml'} line ${
               error.mark.line + 1
             }, column ${error.mark.column + 1}`
           );
         }
         logger.error(error.stack);
-        fs.appendFileSync(
-          "error.log",
-          `[${new Date().toISOString()}] ${error.stack}\n`
-        );
+        fs.appendFileSync('error.log', `[${new Date().toISOString()}] ${error.stack}\n`);
         throw err;
       }
 
       // Load and integrate module-specific API docs
       const apiModules = [
         {
-          name: "Sources",
-          path: path.join("..", "src", "features", "source", "sources.yaml"),
+          name: 'Sources',
+          path: path.join('..', 'src', 'features', 'source', 'sources.yaml'),
         },
         {
-          name: "File Sources",
-          path: path.join(
-            "..",
-            "src",
-            "features",
-            "source",
-            "file",
-            "file-sources.yaml"
-          ),
+          name: 'File Sources',
+          path: path.join('..', 'src', 'features', 'source', 'file', 'file-sources.yaml'),
         },
         {
-          name: "Text Sources",
-          path: path.join(
-            "..",
-            "src",
-            "features",
-            "source",
-            "text",
-            "text-sources.yaml"
-          ),
+          name: 'Text Sources',
+          path: path.join('..', 'src', 'features', 'source', 'text', 'text-sources.yaml'),
         },
         {
-          name: "Users",
-          path: path.join("..", "src", "features", "user", "users.yaml"),
+          name: 'Users',
+          path: path.join('..', 'src', 'features', 'user', 'users.yaml'),
         },
-        { name: "System", path: path.join("..", "docs", "system.yaml") },
+        { name: 'System', path: path.join('..', 'docs', 'system.yaml') },
       ];
 
       // Process each API module
@@ -106,10 +89,7 @@ class SwaggerConfig {
               );
             }
             logger.error(error.stack);
-            fs.appendFileSync(
-              "error.log",
-              `[${new Date().toISOString()}] ${error.stack}\n`
-            );
+            fs.appendFileSync('error.log', `[${new Date().toISOString()}] ${error.stack}\n`);
             throw err;
           }
 
@@ -129,7 +109,7 @@ class SwaggerConfig {
             }
 
             // Merge each component type (schemas, responses, parameters, etc.)
-            Object.keys(moduleDoc.components).forEach((componentType) => {
+            Object.keys(moduleDoc.components).forEach(componentType => {
               if (!this.swaggerDocument.components[componentType]) {
                 this.swaggerDocument.components[componentType] = {};
               }
@@ -143,18 +123,15 @@ class SwaggerConfig {
 
           // Silent success - no individual module logs
         } catch (moduleError) {
-          logger.warn(
-            `Failed to integrate ${module.name} API documentation:`,
-            moduleError
-          );
+          logger.warn(`Failed to integrate ${module.name} API documentation:`, moduleError);
         }
       }
 
       // Validate the merged Swagger document
       this.validateSwaggerDocument();
     } catch (error) {
-      logger.error("Error loading Swagger YAML file:", error);
-      throw new Error("Failed to load Swagger documentation");
+      logger.error('Error loading Swagger YAML file:', error);
+      throw new Error('Failed to load Swagger documentation');
     }
   }
 
@@ -163,23 +140,20 @@ class SwaggerConfig {
    */
   private validateSwaggerDocument(): void {
     if (!this.swaggerDocument) {
-      logger.error("Swagger document is null or undefined");
+      logger.error('Swagger document is null or undefined');
       return;
     }
 
     // Check for empty paths
-    if (
-      !this.swaggerDocument.paths ||
-      Object.keys(this.swaggerDocument.paths).length === 0
-    ) {
+    if (!this.swaggerDocument.paths || Object.keys(this.swaggerDocument.paths).length === 0) {
       logger.warn(
-        "Swagger document has no paths defined. Check that module files are correctly loaded."
+        'Swagger document has no paths defined. Check that module files are correctly loaded.'
       );
     }
 
     // Check for components
     if (!this.swaggerDocument.components) {
-      logger.warn("Swagger document has no components defined.");
+      logger.warn('Swagger document has no components defined.');
     }
 
     logger.info(`✅ Swagger documentation loaded successfully.`);
@@ -192,7 +166,7 @@ class SwaggerConfig {
     return {
       explorer: true,
       swaggerOptions: {
-        docExpansion: "none", // 'list', 'full', 'none'
+        docExpansion: 'none', // 'list', 'full', 'none'
         filter: true,
         showRequestDuration: true,
         tryItOutEnabled: true,
@@ -210,8 +184,8 @@ class SwaggerConfig {
         .swagger-ui .info .title { color: #3b82f6 }
         .swagger-ui .scheme-container { background: #f8fafc; border: 1px solid #e2e8f0; }
       `,
-      customSiteTitle: "Express Backend Template API Documentation",
-      customfavIcon: "/favicon.ico",
+      customSiteTitle: 'Express Backend Template API Documentation',
+      customfavIcon: '/favicon.ico',
     };
   }
 
@@ -220,9 +194,9 @@ class SwaggerConfig {
    * @param app Express application instance
    * @param docsPath Path where documentation will be served (default: '/api-docs')
    */
-  public setupSwagger(app: Application, docsPath: string = "/api-docs"): void {
+  public setupSwagger(app: Application, docsPath: string = '/api-docs'): void {
     if (!this.swaggerDocument) {
-      logger.warn("Swagger document not loaded. Skipping Swagger setup.");
+      logger.warn('Swagger document not loaded. Skipping Swagger setup.');
       return;
     }
 
@@ -234,7 +208,7 @@ class SwaggerConfig {
 
     // Serve raw OpenAPI JSON
     app.get(`${docsPath}.json`, (req, res) => {
-      res.setHeader("Content-Type", "application/json");
+      res.setHeader('Content-Type', 'application/json');
       res.send(this.swaggerDocument);
     });
 
@@ -252,9 +226,7 @@ class SwaggerConfig {
    * Update server URLs dynamically based on environment
    * @param servers Array of server objects
    */
-  public updateServers(
-    servers: Array<{ url: string; description: string }>
-  ): void {
+  public updateServers(servers: Array<{ url: string; description: string }>): void {
     if (this.swaggerDocument && this.swaggerDocument.servers) {
       this.swaggerDocument.servers = servers;
     }
@@ -277,9 +249,7 @@ export const setupSwagger = (app: Application, docsPath?: string) => {
  * Update server URLs in Swagger document
  * @param servers Array of server objects
  */
-export const updateSwaggerServers = (
-  servers: Array<{ url: string; description: string }>
-) => {
+export const updateSwaggerServers = (servers: Array<{ url: string; description: string }>) => {
   swaggerConfig.updateServers(servers);
 };
 

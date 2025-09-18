@@ -1,8 +1,8 @@
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 dotenv.config({ quiet: true });
 
-import { cleanEnv, port, str, num } from "envalid";
-import { logger } from "./logger";
+import { cleanEnv, port, str, num } from 'envalid';
+import { logger } from './logger';
 
 const validateEnv = () => {
   const env = cleanEnv(process.env, {
@@ -48,12 +48,10 @@ const validateEnv = () => {
 
   // Additional JWT secret validation
   if (env.JWT_SECRET.length < 32) {
-    throw new Error(
-      "JWT_SECRET must be at least 32 characters long for security"
-    );
+    throw new Error('JWT_SECRET must be at least 32 characters long for security');
   }
 
-  logger.info("✅ Environment variables validated.");
+  logger.info('✅ Environment variables validated.');
   return env;
 };
 

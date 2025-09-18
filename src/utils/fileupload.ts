@@ -1,14 +1,14 @@
-import { S3Client } from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
-import multer from "multer";
-import { extractText } from "../features/source/textExtractor";
+import { S3Client } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import multer from 'multer';
+import { extractText } from '../features/source/textExtractor';
 
 // Helper to extract inserted ID from knex returning result
 export function extractInsertedId(result: unknown): number {
   if (!result || !Array.isArray(result) || result.length === 0)
-    throw new Error("Failed to create source record");
+    throw new Error('Failed to create source record');
   const rec = result[0];
-  return typeof rec === "object" && rec !== null
+  return typeof rec === 'object' && rec !== null
     ? (rec as { id?: unknown }).id
       ? Number((rec as { id: unknown }).id)
       : Number(rec)
@@ -17,10 +17,10 @@ export function extractInsertedId(result: unknown): number {
 
 // Define allowed file types and max size
 const ALLOWED_DOCUMENT_TYPES = [
-  "application/pdf",
-  "text/plain",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  'application/pdf',
+  'text/plain',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_FILES_PER_UPLOAD = 10;
@@ -49,17 +49,15 @@ export interface FileUploadResult {
 // Upload a single file from multipart form data
 export const uploadFile = async (
   file: multer.Multer.File,
-  folderPath: string = "uploads"
+  folderPath: string = 'uploads'
 ): Promise<FileUploadResult> => {
   if (!file) {
-    throw new Error("No file provided");
+    throw new Error('No file provided');
   }
 
   // Sanitize filename and folder path to prevent path traversal
-  const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
-  const sanitizedFolder = folderPath
-    .replace(/[^a-zA-Z0-9/_-]/g, "_")
-    .replace(/^\/+|\/+$/g, "");
+  const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const sanitizedFolder = folderPath.replace(/[^a-zA-Z0-9/_-]/g, '_').replace(/^\/+|\/+$/g, '');
 
   // Generate a unique filename to prevent overwriting
   const timestamp = new Date().getTime();
@@ -72,7 +70,7 @@ export const uploadFile = async (
     Key: filePath,
     Body: file.buffer,
     ContentType: file.mimetype,
-    ACL: "public-read" as const, // Make the file public
+    ACL: 'public-read' as const, // Make the file public
   };
 
   try {
@@ -83,7 +81,7 @@ export const uploadFile = async (
     }).done();
 
     // Extract text content if possible
-    let textContent = "";
+    let textContent = '';
     try {
       textContent = await extractText(file.buffer, file.mimetype);
     } catch (err) {
@@ -93,12 +91,10 @@ export const uploadFile = async (
     // Construct the proper URL for Supabase Storage
     // Format should be: https://[project-ref].storage.supabase.co/storage/v1/object/public/[bucket-name]/[file-path]
     const bucketName = process.env.AWS_BUCKET_NAME;
-    const endpoint = process.env.AWS_ENDPOINT?.replace("/s3", "");
+    const endpoint = process.env.AWS_ENDPOINT?.replace('/s3', '');
 
     return {
-      Location:
-        uploadResult.Location ||
-        `${endpoint}/object/public/${bucketName}/${filePath}`,
+      Location: uploadResult.Location || `${endpoint}/object/public/${bucketName}/${filePath}`,
       Key: uploadResult.Key,
       Bucket: uploadResult.Bucket,
       ETag: uploadResult.ETag,
@@ -114,18 +110,18 @@ export const uploadFile = async (
 // Upload multiple files from multer (multipart/form-data)
 export const uploadMultipleFiles = async (
   files: multer.Multer.File[],
-  folderPath: string = "uploads"
+  folderPath: string = 'uploads'
 ): Promise<FileUploadResult[]> => {
   // Validate file count
   if (!files || files.length === 0) {
-    throw new Error("No files provided");
+    throw new Error('No files provided');
   }
 
   if (files.length > MAX_FILES_PER_UPLOAD) {
     throw new Error(`Too many files. Maximum allowed: ${MAX_FILES_PER_UPLOAD}`);
   }
 
-  const uploadPromises = files.map((file) => uploadFile(file, folderPath));
+  const uploadPromises = files.map(file => uploadFile(file, folderPath));
   const results = await Promise.all(uploadPromises);
   return results;
 };

@@ -1,20 +1,20 @@
-import DB from "./index.schema";
-import { seeds } from "./seeds";
-import { logger } from "../src/utils/logger";
+import DB from './index.schema';
+import { seeds } from './seeds';
+import { logger } from '../src/utils/logger';
 
-export const TEXT_SOURCES_TABLE = "text_sources";
+export const TEXT_SOURCES_TABLE = 'text_sources';
 
 // Schema Definition
 export const createTable = async () => {
-  await DB.schema.createTable(TEXT_SOURCES_TABLE, (table) => {
-    table.increments("id").primary();
+  await DB.schema.createTable(TEXT_SOURCES_TABLE, table => {
+    table.increments('id').primary();
     table
-      .integer("source_id")
+      .integer('source_id')
       .notNullable()
-      .references("id")
-      .inTable("sources")
-      .onDelete("CASCADE");
-    table.text("content").notNullable();
+      .references('id')
+      .inTable('sources')
+      .onDelete('CASCADE');
+    table.text('content').notNullable();
   });
 
   // Create the update_timestamp trigger
@@ -41,8 +41,8 @@ export const seedTable = async () => {
 
 // For individual table migration (when run directly)
 if (require.main === module) {
-  const dropFirst = process.argv.includes("--drop");
-  const skipSeed = process.argv.includes("--no-seed");
+  const dropFirst = process.argv.includes('--drop');
+  const skipSeed = process.argv.includes('--no-seed');
 
   (async () => {
     try {
@@ -59,8 +59,8 @@ if (require.main === module) {
       }
 
       logger.info(
-        `${TEXT_SOURCES_TABLE} table ${dropFirst ? "recreated" : "created"}${
-          skipSeed ? "" : " and seeded"
+        `${TEXT_SOURCES_TABLE} table ${dropFirst ? 'recreated' : 'created'}${
+          skipSeed ? '' : ' and seeded'
         }`
       );
       process.exit(0);
