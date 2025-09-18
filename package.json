@@ -8,7 +8,7 @@
     "start": "cross-env NODE_ENV=production node build/src/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc && npm run postbuild",
-    "postbuild": "cpy 'docs/**/*' build/docs && cpy 'src/**/*.yaml' build/src",
+    "postbuild": "cpy 'docs/**/*' build/docs",
     "test": "jest --forceExit --detectOpenHandles",
     "test:watch": "jest --watch",
     "test:unit": "jest --testPathPatterns='unit' --forceExit --detectOpenHandles",
