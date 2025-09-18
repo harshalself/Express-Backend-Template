@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from '../utils/uuid';
 
 // Add request ID to all requests for tracing
 export const requestIdMiddleware = (req: Request, res: Response, next: NextFunction) => {

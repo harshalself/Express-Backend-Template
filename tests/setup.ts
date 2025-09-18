@@ -1,4 +1,5 @@
 import { config } from 'dotenv';
+import { UuidTestHelper } from './utils/uuid.helper';
 
 // Load test environment variables
 config({ path: '.env.test' });
@@ -6,6 +7,11 @@ config({ path: '.env.test' });
 // Set test environment
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-purposes-only-12345678901234567890';
+
+// Reset UUID helper before each test suite
+beforeEach(() => {
+  UuidTestHelper.reset();
+});
 
 // Suppress console logs during tests unless DEBUG is set
 if (!process.env.DEBUG) {

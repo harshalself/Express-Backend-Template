@@ -11,9 +11,6 @@ module.exports = {
       },
     ],
   },
-  moduleNameMapper: {
-    '^uuid$': '<rootDir>/tests/__mocks__/uuid.js',
-  },
   collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/server.ts', '!src/app.ts'],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
