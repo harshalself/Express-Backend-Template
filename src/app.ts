@@ -1,21 +1,17 @@
-import "reflect-metadata";
-import cookieParser from "cookie-parser";
-import express from "express";
-import hpp from "hpp";
-import morgan from "morgan";
-import compression from "compression";
-import {
-  authRateLimit,
-  apiRateLimit,
-} from "./middlewares/rate-limit.middleware";
-import { requestIdMiddleware } from "./middlewares/request-id.middleware";
-import { securityMiddleware } from "./middlewares/security.middleware";
-import { corsMiddleware } from "./middlewares/cors.middleware";
-import Routes from "./interfaces/route.interface";
-import errorMiddleware from "./middlewares/error.middleware";
-import { logger, stream } from "./utils/logger";
-import authMiddleware from "./middlewares/auth.middleware";
-import { setupSwagger, updateSwaggerServers } from "../docs/swagger";
+import cookieParser from 'cookie-parser';
+import express from 'express';
+import hpp from 'hpp';
+import morgan from 'morgan';
+import compression from 'compression';
+import { authRateLimit, apiRateLimit } from './middlewares/rate-limit.middleware';
+import { requestIdMiddleware } from './middlewares/request-id.middleware';
+import { securityMiddleware } from './middlewares/security.middleware';
+import { corsMiddleware } from './middlewares/cors.middleware';
+import Routes from './interfaces/route.interface';
+import errorMiddleware from './middlewares/error.middleware';
+import { logger, stream } from './utils/logger';
+import authMiddleware from './middlewares/auth.middleware';
+import { setupSwagger, updateSwaggerServers } from '../docs/swagger';
 
 class App {
   public app: express.Application;
@@ -26,7 +22,7 @@ class App {
     // Initialize the express app
     this.app = express();
     this.port = process.env.PORT || 8000;
-    this.env = process.env.NODE_ENV || "development";
+    this.env = process.env.NODE_ENV || 'development';
 
     this.app.use(cookieParser());
     this.initializeMiddlewares();
@@ -34,33 +30,29 @@ class App {
     this.initializeSwagger();
     this.initializeErrorHandling();
 
-    this.app.get("/", (req, res) => {
-      res.send("Welcome to Express Backend Template API");
+    this.app.get('/', (req, res) => {
+      res.send('Welcome to Express Backend Template API');
     });
 
     // Health check endpoint
-    this.app.get("/health", (req, res) => {
+    this.app.get('/health', (req, res) => {
       res.status(200).json({
-        status: "healthy",
+        status: 'healthy',
         timestamp: new Date().toISOString(),
         environment: this.env,
         uptime: process.uptime(),
         memory: {
-          used:
-            Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) /
-            100,
-          total:
-            Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) /
-            100,
+          used: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
+          total: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
         },
-        version: process.env.npm_package_version || "1.0.0",
+        version: process.env.npm_package_version || '1.0.0',
       });
     });
   }
 
   public listen() {
     const port = Number(this.port);
-    this.app.listen(port, "0.0.0.0", () => {
+    this.app.listen(port, '0.0.0.0', () => {
       logger.info(
         `🚀 Express Backend Template API listening on port ${port}. Environment: ${this.env}.`
       );
@@ -81,30 +73,30 @@ class App {
     this.app.use(hpp());
 
     // Logging middleware
-    if (this.env === "production") {
-      this.app.use(morgan("combined", { stream }));
-    } else if (this.env === "development") {
-      this.app.use(morgan("dev", { stream }));
+    if (this.env === 'production') {
+      this.app.use(morgan('combined', { stream }));
+    } else if (this.env === 'development') {
+      this.app.use(morgan('dev', { stream }));
     }
 
     // Compression
     this.app.use(compression());
 
     // Rate limiting
-    this.app.use("/api/v1/users/login", authRateLimit);
-    this.app.use("/api/v1/users/register", authRateLimit);
-    this.app.use("/api/v1/", apiRateLimit);
+    this.app.use('/api/v1/users/login', authRateLimit);
+    this.app.use('/api/v1/users/register', authRateLimit);
+    this.app.use('/api/v1/', apiRateLimit);
 
     // Body parsing
-    this.app.use(express.json({ limit: "10mb" }));
-    this.app.use(express.urlencoded({ limit: "10mb", extended: true }));
+    this.app.use(express.json({ limit: '10mb' }));
+    this.app.use(express.urlencoded({ limit: '10mb', extended: true }));
     this.app.use(cookieParser());
   }
 
   private initializeRoutes(routes: Routes[]) {
-    this.app.use("/api/v1/", authMiddleware);
-    routes.forEach((route) => {
-      this.app.use("/api/v1/", route.router);
+    this.app.use('/api/v1/', authMiddleware);
+    routes.forEach(route => {
+      this.app.use('/api/v1/', route.router);
     });
   }
 
@@ -123,7 +115,7 @@ class App {
     ]);
 
     // Setup Swagger documentation
-    setupSwagger(this.app, "/api-docs");
+    setupSwagger(this.app, '/api-docs');
   }
 
   private initializeErrorHandling() {

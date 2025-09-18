@@ -1,22 +1,20 @@
-import { CreateUser, UpdateUser } from "./user.validation";
-import knex from "../../../database/index.schema";
-import { IUser } from "./user.interface";
-import HttpException from "../../utils/HttpException";
-import bcrypt from "bcrypt";
-import { generateToken } from "../../utils/jwt";
+import { CreateUser, UpdateUser } from './user.validation';
+import knex from '../../../database/index.schema';
+import { IUser } from './user.interface';
+import HttpException from '../../utils/HttpException';
+import bcrypt from 'bcrypt';
+import { generateToken } from '../../utils/jwt';
 
 class UserService {
   /**
    * Register a new user
    */
-  public async register(data: CreateUser): Promise<IUser> {
+  public async register(data: CreateUser): Promise<IUser & { token: string }> {
     try {
-      const existingUser = await knex("users")
-        .where({ email: data.email })
-        .first();
+      const existingUser = await knex('users').where({ email: data.email }).first();
 
       if (existingUser) {
-        throw new HttpException(409, "Email already registered");
+        throw new HttpException(409, 'Email already registered');
       }
 
       const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -28,8 +26,22 @@ class UserService {
         updated_at: new Date(),
       };
 
-      const [result] = await knex("users").insert(userData).returning("*");
-      return result;
+      const [result] = await knex('users').insert(userData).returning('*');
+
+      // Generate token for new user
+      const token = generateToken(
+        {
+          id: result.id,
+          email: result.email,
+          name: result.name,
+        },
+        '24h'
+      );
+
+      return {
+        ...result,
+        token,
+      };
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new HttpException(500, `Error registering user: ${error.message}`);
@@ -39,26 +51,21 @@ class UserService {
   /**
    * Login a user and generate JWT token
    */
-  public async login(
-    email: string,
-    password: string
-  ): Promise<IUser & { token: string }> {
+  public async login(email: string, password: string): Promise<IUser & { token: string }> {
     try {
       if (!email || !password) {
-        throw new HttpException(400, "Email and password are required");
+        throw new HttpException(400, 'Email and password are required');
       }
 
-      const user = await knex("users")
-        .where({ email, is_deleted: false })
-        .first();
+      const user = await knex('users').where({ email, is_deleted: false }).first();
 
       if (!user) {
-        throw new HttpException(404, "Email not registered");
+        throw new HttpException(404, 'Email not registered');
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        throw new HttpException(401, "Incorrect password");
+        throw new HttpException(401, 'Incorrect password');
       }
 
       const token = generateToken(
@@ -67,7 +74,7 @@ class UserService {
           email: user.email,
           name: user.name,
         },
-        "24h"
+        '24h'
       );
 
       return {
@@ -85,9 +92,7 @@ class UserService {
    */
   public async getAllUsers(): Promise<IUser[]> {
     try {
-      const users = await knex("users")
-        .where({ is_deleted: false })
-        .select("*");
+      const users = await knex('users').where({ is_deleted: false }).select('*');
       return users;
     } catch (error) {
       throw new HttpException(500, `Error fetching users: ${error.message}`);
@@ -99,10 +104,10 @@ class UserService {
    */
   public async getUserById(id: number): Promise<IUser> {
     try {
-      const user = await knex("users").where({ id, is_deleted: false }).first();
+      const user = await knex('users').where({ id, is_deleted: false }).first();
 
       if (!user) {
-        throw new HttpException(404, "User not found");
+        throw new HttpException(404, 'User not found');
       }
 
       return user;
@@ -115,29 +120,23 @@ class UserService {
   /**
    * Update user data
    */
-  public async updateUser(
-    id: number,
-    data: UpdateUser,
-    updatedBy: number
-  ): Promise<IUser> {
+  public async updateUser(id: number, data: UpdateUser, updatedBy: number): Promise<IUser> {
     try {
-      const existingUser = await knex("users")
-        .where({ id, is_deleted: false })
-        .first();
+      const existingUser = await knex('users').where({ id, is_deleted: false }).first();
 
       if (!existingUser) {
-        throw new HttpException(404, "User not found");
+        throw new HttpException(404, 'User not found');
       }
 
       // Check if email is being updated and if it already exists
       if (data.email && data.email !== existingUser.email) {
-        const emailExists = await knex("users")
+        const emailExists = await knex('users')
           .where({ email: data.email, is_deleted: false })
           .whereNot({ id })
           .first();
 
         if (emailExists) {
-          throw new HttpException(409, "Email already exists");
+          throw new HttpException(409, 'Email already exists');
         }
       }
 
@@ -152,10 +151,7 @@ class UserService {
         updateData.password = await bcrypt.hash(data.password, 10);
       }
 
-      const [result] = await knex("users")
-        .where({ id })
-        .update(updateData)
-        .returning("*");
+      const [result] = await knex('users').where({ id }).update(updateData).returning('*');
 
       return result;
     } catch (error) {
@@ -169,15 +165,13 @@ class UserService {
    */
   public async deleteUser(id: number, deletedBy: number): Promise<void> {
     try {
-      const existingUser = await knex("users")
-        .where({ id, is_deleted: false })
-        .first();
+      const existingUser = await knex('users').where({ id, is_deleted: false }).first();
 
       if (!existingUser) {
-        throw new HttpException(404, "User not found");
+        throw new HttpException(404, 'User not found');
       }
 
-      await knex("users").where({ id }).update({
+      await knex('users').where({ id }).update({
         is_deleted: true,
         deleted_by: deletedBy,
         deleted_at: new Date(),
