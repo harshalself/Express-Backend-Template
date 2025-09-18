@@ -2,7 +2,12 @@ import { NextFunction, Request, Response } from 'express';
 import HttpException from '../utils/HttpException';
 import { logger } from '../utils/logger';
 
-const errorMiddleware = (error: HttpException, req: Request, res: Response, next: NextFunction) => {
+const errorMiddleware = (
+  error: HttpException,
+  req: Request,
+  res: Response,
+  _next: NextFunction
+) => {
   try {
     const requestId = (req as { requestId?: string }).requestId || 'unknown';
     const status: number = error.status || 500;
@@ -43,7 +48,7 @@ const errorMiddleware = (error: HttpException, req: Request, res: Response, next
       },
     });
   } catch (err) {
-    next(err);
+    _next(err);
   }
 };
 

@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 
-// Enhanced CORS middleware with environment-based configuration
-export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Enhanced CORS middleware with environment-based configuration
+ * Handles cross-origin requests with configurable allowed origins
+ */
+export const corsMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(origin => origin.trim()) || [
     'http://localhost:3000',
     'http://localhost:8080',
@@ -27,10 +30,11 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
     // Reject unauthorized origins
-    return res.status(403).json({
+    res.status(403).json({
       error: 'CORS: Origin not allowed',
       requestId: (req as { requestId?: string }).requestId,
     });
+    return;
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -40,7 +44,8 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   next();

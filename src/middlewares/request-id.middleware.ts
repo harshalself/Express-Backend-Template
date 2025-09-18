@@ -1,14 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
-import { v4 as uuidv4 } from '../utils/uuid';
+import { v4 as generateUuid } from '../utils/uuid';
 
-// Add request ID to all requests for tracing
+// Extend Request interface to include requestId
+export interface RequestWithId extends Request {
+  requestId: string;
+}
+
+/**
+ * Request ID middleware for distributed tracing
+ * Generates or uses existing request ID from headers
+ */
 export const requestIdMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+  // Use existing request ID from header or generate new one
+  const requestId = (req.headers['x-request-id'] as string) || generateUuid();
 
-  // Add to request object
-  (req as Request & { requestId: string }).requestId = requestId;
+  // Add to request object for use in other middlewares/controllers
+  (req as RequestWithId).requestId = requestId;
 
-  // Add to response headers
+  // Add to response headers for client reference
   res.setHeader('X-Request-ID', requestId);
 
   next();
