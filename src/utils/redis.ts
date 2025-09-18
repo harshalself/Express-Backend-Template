@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { createClient } from 'redis';
 import { logger } from './logger';
 
 // Redis configuration from environment variables
@@ -6,13 +6,10 @@ const redisConfig = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD,
-  maxRetriesPerRequest: null,
-  retryDelayOnFailover: 100,
-  enableReadyCheck: false,
 };
 
 // Create Redis client instance
-export const redisClient = new Redis(redisConfig);
+export const redisClient = createClient(redisConfig);
 
 // Handle Redis connection events
 redisClient.on('connect', () => {
@@ -27,7 +24,7 @@ redisClient.on('ready', () => {
   logger.info('✅ Redis client is ready');
 });
 
-redisClient.on('close', () => {
+redisClient.on('end', () => {
   logger.warn('⚠️ Redis connection closed');
 });
 
@@ -35,6 +32,7 @@ redisClient.on('close', () => {
 export const testRedisConnection = async (): Promise<boolean> => {
   try {
     logger.info(`🔄 Testing Redis connection to ${redisConfig.host}:${redisConfig.port}...`);
+    await redisClient.connect();
     const result = await redisClient.ping();
     logger.info(`✅ Redis connection test passed: ${result}`);
     return true;
@@ -59,7 +57,7 @@ export const pingRedisConnection = async (): Promise<boolean> => {
 // Graceful shutdown
 export const closeRedisConnection = async (): Promise<void> => {
   try {
-    await redisClient.quit();
+    await redisClient.disconnect();
     logger.info('✅ Redis connection closed gracefully');
   } catch (error) {
     logger.error('❌ Error closing Redis connection:', error);
