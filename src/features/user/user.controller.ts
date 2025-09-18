@@ -1,15 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import {
-  createUserSchema,
-  updateUserSchema,
-  loginSchema,
-  CreateUser,
-  UpdateUser,
-  Login,
-} from "./user.validation";
+import { CreateUser, UpdateUser, Login } from "./user.validation";
 import { RequestWithUser } from "../../interfaces/auth.interface";
 import UserService from "./user.service";
-import HttpException from "../../exceptions/HttpException";
+import HttpException from "../../utils/HttpException";
 
 class UserController {
   public userService = new UserService();
@@ -73,7 +66,8 @@ class UserController {
 
       // Remove passwords from response
       const usersResponse = users.map((user) => {
-        const { password, ...userWithoutPassword } = user;
+        const userWithoutPassword = { ...user };
+        delete userWithoutPassword.password;
         return userWithoutPassword;
       });
 
@@ -101,7 +95,8 @@ class UserController {
       const user = await this.userService.getUserById(id);
 
       // Remove password from response
-      const { password, ...userResponse } = user;
+      const userResponse = { ...user };
+      delete userResponse.password;
 
       res.status(200).json({
         data: userResponse,
@@ -135,7 +130,8 @@ class UserController {
       const user = await this.userService.updateUser(id, updateData, userId);
 
       // Remove password from response
-      const { password, ...userResponse } = user;
+      const userResponse = { ...user };
+      delete userResponse.password;
 
       res.status(200).json({
         data: userResponse,

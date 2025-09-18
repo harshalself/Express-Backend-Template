@@ -32,7 +32,7 @@ redisClient.on("close", () => {
 });
 
 // Test Redis connectivity on startup
-export const initializeRedisConnection = async (): Promise<boolean> => {
+export const testRedisConnection = async (): Promise<boolean> => {
   try {
     logger.info(
       `🔄 Testing Redis connection to ${redisConfig.host}:${redisConfig.port}...`
@@ -47,7 +47,7 @@ export const initializeRedisConnection = async (): Promise<boolean> => {
 };
 
 // Test Redis connectivity (for manual testing)
-export const testRedisConnection = async (): Promise<boolean> => {
+export const pingRedisConnection = async (): Promise<boolean> => {
   try {
     const result = await redisClient.ping();
     logger.info("✅ Redis ping successful:", result);

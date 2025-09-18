@@ -1,12 +1,16 @@
 import "reflect-metadata";
 import cookieParser from "cookie-parser";
-import cors from "cors";
 import express from "express";
-import helmet from "helmet";
 import hpp from "hpp";
 import morgan from "morgan";
 import compression from "compression";
-import rateLimitMiddleware from "./middlewares/rate-limit.middleware";
+import {
+  authRateLimit,
+  apiRateLimit,
+} from "./middlewares/rate-limit.middleware";
+import { requestIdMiddleware } from "./middlewares/request-id.middleware";
+import { securityMiddleware } from "./middlewares/security.middleware";
+import { corsMiddleware } from "./middlewares/cors.middleware";
 import Routes from "./interfaces/route.interface";
 import errorMiddleware from "./middlewares/error.middleware";
 import { logger, stream } from "./utils/logger";
@@ -31,7 +35,7 @@ class App {
     this.initializeErrorHandling();
 
     this.app.get("/", (req, res) => {
-      res.send("Welcome to Chatverse Backend");
+      res.send("Welcome to Express Backend Template API");
     });
 
     // Health check endpoint
@@ -58,7 +62,7 @@ class App {
     const port = Number(this.port);
     this.app.listen(port, "0.0.0.0", () => {
       logger.info(
-        `🚀 Chatverse Backend listening on port ${port}. Environment: ${this.env}.`
+        `🚀 Express Backend Template API listening on port ${port}. Environment: ${this.env}.`
       );
     });
   }
@@ -68,32 +72,32 @@ class App {
   }
 
   private initializeMiddlewares() {
+    // Request ID middleware (must be first)
+    this.app.use(requestIdMiddleware);
+
+    // Security middlewares
+    this.app.use(securityMiddleware);
+    this.app.use(corsMiddleware);
+    this.app.use(hpp());
+
+    // Logging middleware
     if (this.env === "production") {
       this.app.use(morgan("combined", { stream }));
     } else if (this.env === "development") {
       this.app.use(morgan("dev", { stream }));
     }
 
-    // Configure CORS with specific allowed origins
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
-      "https://chatverse-frontend.vercel.app/",
-    ];
-    this.app.use(
-      cors({
-        origin: allowedOrigins,
-        credentials: true,
-      })
-    );
-
-    this.app.use(hpp());
-    this.app.use(helmet());
+    // Compression
     this.app.use(compression());
 
-    // Add rate limiting middleware
-    this.app.use("/api/", rateLimitMiddleware);
+    // Rate limiting
+    this.app.use("/api/v1/users/login", authRateLimit);
+    this.app.use("/api/v1/users/register", authRateLimit);
+    this.app.use("/api/v1/", apiRateLimit);
 
-    this.app.use(express.json({ limit: "10mb" })); // Reduced from 2gb
-    this.app.use(express.urlencoded({ limit: "10mb", extended: true })); // Reduced from 2gb
+    // Body parsing
+    this.app.use(express.json({ limit: "10mb" }));
+    this.app.use(express.urlencoded({ limit: "10mb", extended: true }));
     this.app.use(cookieParser());
   }
 

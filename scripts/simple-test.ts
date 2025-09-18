@@ -5,7 +5,7 @@ const API_BASE_URL = "http://localhost:8000/api/v1";
 async function simpleTest() {
   try {
     console.log("Testing basic connectivity...");
-    const response = await axios.get(`http://localhost:8000/api-docs`);
+    await axios.get(`http://localhost:8000/api-docs`);
     console.log("✅ Server is reachable");
 
     // Test login
@@ -17,11 +17,14 @@ async function simpleTest() {
 
     console.log("✅ Login successful");
     console.log("Response:", loginResponse.data);
-  } catch (error: any) {
-    console.log("❌ Error:", error.message);
-    if (error.response) {
-      console.log("Status:", error.response.status);
-      console.log("Data:", error.response.data);
+  } catch (error: unknown) {
+    const err = error as Error & {
+      response?: { status: number; data: unknown };
+    };
+    console.log("❌ Error:", err.message);
+    if (err.response) {
+      console.log("Status:", err.response.status);
+      console.log("Data:", err.response.data);
     }
   }
 }

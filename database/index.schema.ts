@@ -3,7 +3,7 @@ dotenv.config({ quiet: true });
 
 import knex from "knex";
 
-const awsConf = {
+const awsConfig = {
   client: "pg",
   connection: {
     host: process.env.DB_HOST,
@@ -20,7 +20,7 @@ const awsConf = {
   searchPath: "public",
 };
 
-const DB = knex(awsConf);
+const DB = knex(awsConfig);
 
 export default DB;
 

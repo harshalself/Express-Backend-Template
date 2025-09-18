@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import App from "./app";
 import { logger } from "./utils/logger";
 import validateEnv from "./utils/validateEnv";
@@ -7,7 +6,7 @@ import BaseSourceRoute from "./features/source/source.route";
 import FileSourceRoute from "./features/source/file/file-source.route";
 import TextSourceRoute from "./features/source/text/text-source.route";
 import { testDbConnection } from "./utils/testdbConnection";
-import { initializeRedisConnection } from "./utils/redis";
+import { testRedisConnection } from "./utils/redis";
 
 validateEnv();
 
@@ -19,14 +18,7 @@ async function bootstrap() {
     await testDbConnection();
 
     // Initialize Redis connection (optional)
-    try {
-      const redisConnected = await initializeRedisConnection();
-      if (!redisConnected) {
-        logger.warn("⚠️ Redis connection failed, continuing without Redis...");
-      }
-    } catch (error) {
-      logger.warn("⚠️ Redis not available, continuing without caching...");
-    }
+    await testRedisConnection();
 
     // Start Express app
     const app = new App([

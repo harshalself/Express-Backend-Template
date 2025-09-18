@@ -31,19 +31,22 @@ class SwaggerConfig {
       const swaggerPath = path.join(__dirname, "swagger.yaml");
       try {
         this.swaggerDocument = YAML.load(swaggerPath);
-      } catch (err: any) {
-        logger.error("YAML Parse Error in swagger.yaml:", err.message);
-        if (err.mark) {
+      } catch (err: unknown) {
+        const error = err as Error & {
+          mark?: { name?: string; line: number; column: number };
+        };
+        logger.error("YAML Parse Error in swagger.yaml:", error.message);
+        if (error.mark) {
           logger.error(
-            `At ${err.mark.name || "swagger.yaml"} line ${
-              err.mark.line + 1
-            }, column ${err.mark.column + 1}`
+            `At ${error.mark.name || "swagger.yaml"} line ${
+              error.mark.line + 1
+            }, column ${error.mark.column + 1}`
           );
         }
-        logger.error(err.stack);
+        logger.error(error.stack);
         fs.appendFileSync(
           "error.log",
-          `[${new Date().toISOString()}] ${err.stack}\n`
+          `[${new Date().toISOString()}] ${error.stack}\n`
         );
         throw err;
       }
@@ -90,19 +93,22 @@ class SwaggerConfig {
           let moduleDoc;
           try {
             moduleDoc = YAML.load(modulePath);
-          } catch (err: any) {
-            logger.error(`YAML Parse Error in ${module.path}:`, err.message);
-            if (err.mark) {
+          } catch (err: unknown) {
+            const error = err as Error & {
+              mark?: { name?: string; line: number; column: number };
+            };
+            logger.error(`YAML Parse Error in ${module.path}:`, error.message);
+            if (error.mark) {
               logger.error(
-                `At ${err.mark.name || module.path} line ${
-                  err.mark.line + 1
-                }, column ${err.mark.column + 1}`
+                `At ${error.mark.name || module.path} line ${
+                  error.mark.line + 1
+                }, column ${error.mark.column + 1}`
               );
             }
-            logger.error(err.stack);
+            logger.error(error.stack);
             fs.appendFileSync(
               "error.log",
-              `[${new Date().toISOString()}] ${err.stack}\n`
+              `[${new Date().toISOString()}] ${error.stack}\n`
             );
             throw err;
           }
@@ -204,7 +210,7 @@ class SwaggerConfig {
         .swagger-ui .info .title { color: #3b82f6 }
         .swagger-ui .scheme-container { background: #f8fafc; border: 1px solid #e2e8f0; }
       `,
-      customSiteTitle: "AI Chatbot API Documentation",
+      customSiteTitle: "Express Backend Template API Documentation",
       customfavIcon: "/favicon.ico",
     };
   }

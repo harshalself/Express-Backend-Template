@@ -4,7 +4,7 @@ import {
   SourceInput,
   SourceUpdateInput,
 } from "./file/source.interface";
-import HttpException from "../../exceptions/HttpException";
+import HttpException from "../../utils/HttpException";
 import { extractInsertedId } from "../../utils/fileupload";
 
 class BaseSourceService {

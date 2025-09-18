@@ -4,11 +4,9 @@ import {
   FileSourceInput,
   FileSourceUpdateInput,
 } from "./source.interface";
-import HttpException from "../../../exceptions/HttpException";
+import HttpException from "../../../utils/HttpException";
 import { logger } from "../../../utils/logger";
 import {
-  uploadMulterFile,
-  uploadMultipleFilesMulter,
   extractInsertedId,
   type FileUploadResult,
 } from "../../../utils/fileupload";
@@ -120,7 +118,6 @@ class FileSourceService {
           }
           return fileSource;
         } catch (err) {
-          // eslint-disable-next-line no-console
           logger.error(
             "[DEBUG] Transaction error in createFileSourceFromUpload:",
             err
@@ -229,7 +226,7 @@ class FileSourceService {
         });
 
         // Update file_sources table
-        const updateData: any = {};
+        const updateData: Partial<FileSourceUpdateInput> = {};
         if (sourceData.file_url) updateData.file_url = sourceData.file_url;
         if (sourceData.mime_type) updateData.mime_type = sourceData.mime_type;
         if (sourceData.file_size !== undefined)

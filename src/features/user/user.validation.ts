@@ -18,7 +18,10 @@ export const updateUserSchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
   email: z.string().email("Invalid email format").optional(),
   phone_number: z.string().optional(),
-  password: z.string().min(8, "Password must be at least 8 characters long").optional(),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters long")
+    .optional(),
   updated_by: z.number().optional(),
 });
 

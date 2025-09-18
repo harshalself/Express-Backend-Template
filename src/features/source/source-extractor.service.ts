@@ -1,5 +1,5 @@
 import knex from "../../../database/index.schema";
-import HttpException from "../../exceptions/HttpException";
+import HttpException from "../../utils/HttpException";
 import { logger } from "../../utils/logger";
 
 export interface ExtractedSource {
@@ -10,7 +10,7 @@ export interface ExtractedSource {
 }
 
 export interface TransformedVectorRecord {
-  _id: string;
+  id: string;
   text: string;
   category: string;
   sourceId: number;
@@ -147,7 +147,7 @@ export class SourceExtractorService {
         const chunks = this.chunkContent(source.content, 8000);
 
         return chunks.map((chunk, index) => ({
-          _id:
+          id:
             chunks.length > 1
               ? `user_${userId}_${source.sourceType}_source_${
                   source.sourceId

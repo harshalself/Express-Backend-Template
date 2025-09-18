@@ -1,15 +1,17 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import mime from "mime-types";
+import multer from "multer";
 import { extractText } from "../features/source/textExtractor";
 
 // Helper to extract inserted ID from knex returning result
-export function extractInsertedId(result: any): number {
-  if (!result || result.length === 0)
+export function extractInsertedId(result: unknown): number {
+  if (!result || !Array.isArray(result) || result.length === 0)
     throw new Error("Failed to create source record");
   const rec = result[0];
   return typeof rec === "object" && rec !== null
-    ? rec.id || Number(rec)
+    ? (rec as { id?: unknown }).id
+      ? Number((rec as { id: unknown }).id)
+      : Number(rec)
     : Number(rec);
 }
 
@@ -45,8 +47,8 @@ export interface FileUploadResult {
 }
 
 // Upload a single file from multipart form data
-export const uploadMulterFile = async (
-  file: Express.Multer.File,
+export const uploadFile = async (
+  file: multer.Multer.File,
   folderPath: string = "uploads"
 ): Promise<FileUploadResult> => {
   if (!file) {
@@ -56,7 +58,7 @@ export const uploadMulterFile = async (
   // Sanitize filename and folder path to prevent path traversal
   const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
   const sanitizedFolder = folderPath
-    .replace(/[^a-zA-Z0-9\/_-]/g, "_")
+    .replace(/[^a-zA-Z0-9/_-]/g, "_")
     .replace(/^\/+|\/+$/g, "");
 
   // Generate a unique filename to prevent overwriting
@@ -70,7 +72,7 @@ export const uploadMulterFile = async (
     Key: filePath,
     Body: file.buffer,
     ContentType: file.mimetype,
-    ACL: "public-read" as any, // Make the file public
+    ACL: "public-read" as const, // Make the file public
   };
 
   try {
@@ -110,8 +112,8 @@ export const uploadMulterFile = async (
 };
 
 // Upload multiple files from multer (multipart/form-data)
-export const uploadMultipleFilesMulter = async (
-  files: Express.Multer.File[],
+export const uploadMultipleFiles = async (
+  files: multer.Multer.File[],
   folderPath: string = "uploads"
 ): Promise<FileUploadResult[]> => {
   // Validate file count
@@ -123,9 +125,7 @@ export const uploadMultipleFilesMulter = async (
     throw new Error(`Too many files. Maximum allowed: ${MAX_FILES_PER_UPLOAD}`);
   }
 
-  const uploadPromises = files.map((file) =>
-    uploadMulterFile(file, folderPath)
-  );
+  const uploadPromises = files.map((file) => uploadFile(file, folderPath));
   const results = await Promise.all(uploadPromises);
   return results;
 };

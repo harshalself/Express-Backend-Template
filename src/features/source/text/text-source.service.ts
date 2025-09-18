@@ -1,10 +1,6 @@
 import knex from "../../../../database/index.schema";
-import {
-  TextSource,
-  TextSourceInput,
-  TextSourceUpdateInput,
-} from "../file/source.interface";
-import HttpException from "../../../exceptions/HttpException";
+import { TextSource, TextSourceUpdateInput } from "../file/source.interface";
+import HttpException from "../../../utils/HttpException";
 import { extractInsertedId } from "../../../utils/fileupload";
 
 class TextSourceService {
@@ -26,7 +22,7 @@ class TextSourceService {
 
   public async getTextSourceById(
     sourceId: number,
-    trx?: any
+    trx?: typeof knex
   ): Promise<TextSource> {
     try {
       const query = (trx || knex)("sources")

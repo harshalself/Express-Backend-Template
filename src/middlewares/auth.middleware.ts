@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
-import HttpException from "../exceptions/HttpException";
+import HttpException from "../utils/HttpException";
 import { logger } from "../utils/logger";
 import {
   DataStoredInToken,

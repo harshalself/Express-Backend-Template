@@ -1,17 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import {
-  createMultipleFilesSourceSchema,
-  updateFileSourceSchema,
-  CreateMultipleFilesSource,
-  UpdateFileSource,
-} from "./source.validation";
+import { UpdateFileSource } from "./source.validation";
 import FileSourceService from "./file-source.service";
 import { RequestWithUser } from "../../../interfaces/auth.interface";
-import {
-  uploadMulterFile,
-  uploadMultipleFilesMulter,
-} from "../../../utils/fileupload";
-import HttpException from "../../../exceptions/HttpException";
+import { uploadFile, uploadMultipleFiles } from "../../../utils/fileupload";
+import HttpException from "../../../utils/HttpException";
 
 class FileSourceController {
   public fileSourceService = new FileSourceService();
@@ -81,7 +73,7 @@ class FileSourceController {
         const folderPath = await this.fileSourceService.getFolderPathForUser(
           userId
         );
-        const uploadResult = await uploadMulterFile(req.file, folderPath);
+        const uploadResult = await uploadFile(req.file, folderPath);
         const fileSource =
           await this.fileSourceService.createFileSourceFromUpload(
             userId,
@@ -156,10 +148,7 @@ class FileSourceController {
       const folderPath = await this.fileSourceService.getFolderPathForUser(
         userId
       );
-      const uploadResults = await uploadMultipleFilesMulter(
-        req.files,
-        folderPath
-      );
+      const uploadResults = await uploadMultipleFiles(req.files, folderPath);
 
       const fileSources =
         await this.fileSourceService.createMultipleFileSources(
@@ -194,12 +183,8 @@ class FileSourceController {
       const folderPath = await this.fileSourceService.getFolderPathForUser(
         userId
       );
-      const uploadResults = await uploadMultipleFilesMulter(
-        req.files,
-        folderPath
-      );
+      const uploadResults = await uploadMultipleFiles(req.files, folderPath);
       const fileSourcePromises = uploadResults.map((result, index) => {
-        const file = (req.files as Express.Multer.File[])[index];
         const name = req.body.names?.[index];
         const description = req.body.descriptions?.[index];
 

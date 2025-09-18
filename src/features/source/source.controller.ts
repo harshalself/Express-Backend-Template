@@ -1,13 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import BaseSourceService from "./source.service";
 import { RequestWithUser } from "../../interfaces/auth.interface";
-import HttpException from "../../exceptions/HttpException";
-import {
-  createSourceSchema,
-  updateSourceSchema,
-  CreateSource,
-  UpdateSource,
-} from "./file/source.validation";
+import HttpException from "../../utils/HttpException";
+import { CreateSource, UpdateSource } from "./file/source.validation";
 
 class BaseSourceController {
   public baseSourceService = new BaseSourceService();

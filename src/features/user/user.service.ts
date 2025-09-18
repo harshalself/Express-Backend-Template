@@ -1,7 +1,7 @@
 import { CreateUser, UpdateUser } from "./user.validation";
 import knex from "../../../database/index.schema";
 import { IUser } from "./user.interface";
-import HttpException from "../../exceptions/HttpException";
+import HttpException from "../../utils/HttpException";
 import bcrypt from "bcrypt";
 import { generateToken } from "../../utils/jwt";
 

@@ -3,9 +3,9 @@ import { logger } from "./logger";
 
 interface Booking {
   name: string;
-  event_title: string;
+  eventTitle: string;
   date: string;
-  booking_id: string | number;
+  bookingId: string | number;
 }
 
 const sendEmail = async (
@@ -27,15 +27,15 @@ const sendEmail = async (
       from: process.env.EMAIL_USER,
       to: to,
       subject: "Your Event Booking Confirmation",
-      text: `Dear ${booking.name},\n\nThank you for booking with us! Please find your ticket attached.\n\nEvent: ${booking.event_title}\nDate: ${booking.date}\n\nBest regards,\nYour Event Team`,
+      text: `Dear ${booking.name},\n\nThank you for booking with us! Please find your ticket attached.\n\nEvent: ${booking.eventTitle}\nDate: ${booking.date}\n\nBest regards,\nYour Event Team`,
       html: `<p>Dear ${booking.name},</p>
                     <p>Thank you for booking with us! Please find your ticket attached.</p>
-                    <p><b>Event:</b> ${booking.event_title}</p>
+                    <p><b>Event:</b> ${booking.eventTitle}</p>
                     <p><b>Date:</b> ${booking.date}</p>
                     <p>Best regards,<br>Your Event Team</p>`,
       attachments: [
         {
-          filename: `ticket_${booking.booking_id}.jpg`,
+          filename: `ticket_${booking.bookingId}.jpg`,
           path: ticketImagePath,
           cid: "ticketimage@cid",
         },

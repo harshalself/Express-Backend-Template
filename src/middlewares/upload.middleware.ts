@@ -1,27 +1,12 @@
 import multer from "multer";
 import { Request, Response, NextFunction } from "express";
-import HttpException from "../exceptions/HttpException";
+import HttpException from "../utils/HttpException";
 
 // Extend Express Request type to include file and files properties
-declare global {
-  namespace Express {
-    interface Request {
-      file?: Multer.File;
-      files?: Multer.File[];
-    }
-    namespace Multer {
-      interface File {
-        fieldname: string;
-        originalname: string;
-        encoding: string;
-        mimetype: string;
-        size: number;
-        destination?: string;
-        filename?: string;
-        path?: string;
-        buffer: Buffer;
-      }
-    }
+declare module "express" {
+  interface Request {
+    file?: multer.Multer.File;
+    files?: multer.Multer.File[];
   }
 }
 
@@ -42,7 +27,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 // File filter function to validate mime types
 const fileFilter = (
   req: Request,
-  file: Express.Multer.File,
+  file: multer.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
   if (ALLOWED_FILE_TYPES.includes(file.mimetype)) {

@@ -16,11 +16,21 @@ import { logger } from "../src/utils/logger";
 interface ModuleInfo {
   name: string;
   path: string;
-  doc?: any;
+  doc?: {
+    paths?: Record<string, unknown>;
+    components?: {
+      schemas?: Record<string, unknown>;
+    };
+  };
 }
 
 class SwaggerValidator {
-  private swaggerDocument: any;
+  private swaggerDocument: {
+    paths?: Record<string, unknown>;
+    components?: {
+      schemas?: Record<string, unknown>;
+    };
+  } | null = null;
   private modules: ModuleInfo[] = [];
   private docsDir: string;
 
@@ -86,7 +96,7 @@ class SwaggerValidator {
     // Check base structure
     const requiredFields = ["openapi", "info", "paths", "components"];
     const missingFields = requiredFields.filter(
-      (field) => !this.swaggerDocument[field]
+      (field) => !(this.swaggerDocument as Record<string, unknown>)[field]
     );
 
     if (missingFields.length > 0) {
@@ -185,21 +195,20 @@ class SwaggerValidator {
       if (!module.doc || !module.doc.paths) return;
 
       // Function to extract $ref values recursively
-      const extractRefs = (obj: any) => {
-        if (!obj) return;
+      const extractRefs = (obj: unknown): void => {
+        if (!obj || typeof obj !== "object") return;
 
-        if (typeof obj === "object") {
-          if (obj.$ref && typeof obj.$ref === "string") {
-            // Extract schema name from "#/components/schemas/SchemaName"
-            const match = obj.$ref.match(/#\/components\/schemas\/(\w+)/);
-            if (match && match[1]) {
-              referencedSchemas.add(match[1]);
-            }
+        const objRecord = obj as Record<string, unknown>;
+        if (objRecord.$ref && typeof objRecord.$ref === "string") {
+          // Extract schema name from "#/components/schemas/SchemaName"
+          const match = objRecord.$ref.match(/#\/components\/schemas\/(\w+)/);
+          if (match && match[1]) {
+            referencedSchemas.add(match[1]);
           }
-
-          // Process all properties
-          Object.values(obj).forEach((value) => extractRefs(value));
         }
+
+        // Process all properties
+        Object.values(objRecord).forEach((value) => extractRefs(value));
       };
 
       // Extract from paths

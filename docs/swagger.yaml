@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: AI Chatbot API
-  description: A simple chat API that interacts with AI models to process messages and return responses
+  title: Express Backend Template API
+  description: A comprehensive Express.js backend template with user management, file handling, and modular architecture
   version: 1.0.0
   contact:
     name: Harshal

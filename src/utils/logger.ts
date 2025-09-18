@@ -1,9 +1,9 @@
 import fs from "fs";
 import winston from "winston";
 import winstonDaily from "winston-daily-rotate-file";
+import path from "path";
 
 // logs dir (always at project root)
-const path = require("path");
 const logDir = path.resolve(__dirname, "../../../logs");
 
 if (!fs.existsSync(logDir)) {

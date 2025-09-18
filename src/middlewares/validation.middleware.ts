@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import { z } from "zod";
-import HttpException from "../exceptions/HttpException";
+import HttpException from "../utils/HttpException";
 
 const validationMiddleware = (
   schema: z.ZodSchema,
@@ -21,6 +21,8 @@ const validationMiddleware = (
         next();
       }
     } catch (error) {
+      // Log the validation error for debugging
+      console.error("Validation middleware error:", error);
       next(new HttpException(500, "Validation error"));
     }
   };

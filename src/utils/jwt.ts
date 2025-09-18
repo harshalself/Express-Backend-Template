@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import HttpException from "../exceptions/HttpException";
+import HttpException from "./HttpException";
 import { logger } from "./logger";
 
 const JWT_SECRET = process.env.JWT_SECRET;

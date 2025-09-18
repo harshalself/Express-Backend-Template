@@ -1,13 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import {
-  createTextSourceSchema,
-  updateTextSourceSchema,
-  CreateTextSource,
-  UpdateTextSource,
-} from "../file/source.validation";
+import { CreateTextSource, UpdateTextSource } from "../file/source.validation";
 import TextSourceService from "./text-source.service";
 import { RequestWithUser } from "../../../interfaces/auth.interface";
-import HttpException from "../../../exceptions/HttpException";
+import HttpException from "../../../utils/HttpException";
 
 class TextSourceController {
   public textSourceService = new TextSourceService();
