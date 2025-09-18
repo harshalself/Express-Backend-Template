@@ -3,6 +3,7 @@ import { CreateTextSource, UpdateTextSource } from '../file/source.validation';
 import TextSourceService from './text-source.service';
 import { RequestWithUser } from '../../../interfaces/auth.interface';
 import HttpException from '../../../utils/HttpException';
+import { ResponseFormatter } from '../../../utils/responseFormatter';
 
 class TextSourceController {
   public textSourceService = new TextSourceService();
@@ -17,10 +18,7 @@ class TextSourceController {
 
       const textSources = await this.textSourceService.getAllTextSources(userId);
 
-      res.status(200).json({
-        data: textSources,
-        message: 'Text sources retrieved successfully',
-      });
+      ResponseFormatter.success(res, textSources, 'Text sources retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -31,10 +29,7 @@ class TextSourceController {
       const sourceId = Number(req.params.id);
       const textSource = await this.textSourceService.getTextSourceById(sourceId);
 
-      res.status(200).json({
-        data: textSource,
-        message: 'Text source retrieved successfully',
-      });
+      ResponseFormatter.success(res, textSource, 'Text source retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -57,10 +52,7 @@ class TextSourceController {
         userId
       );
 
-      res.status(201).json({
-        data: textSource,
-        message: 'Text source created successfully',
-      });
+      ResponseFormatter.created(res, textSource, 'Text source created successfully');
     } catch (error) {
       next(error);
     }
@@ -82,10 +74,7 @@ class TextSourceController {
         userId
       );
 
-      res.status(200).json({
-        data: updatedTextSource,
-        message: 'Text source updated successfully',
-      });
+      ResponseFormatter.success(res, updatedTextSource, 'Text source updated successfully');
     } catch (error) {
       next(error);
     }

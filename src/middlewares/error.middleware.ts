@@ -36,8 +36,8 @@ const errorMiddleware = (error: HttpException, req: Request, res: Response, next
     res.status(status).json({
       success: false,
       error: {
+        code: error.code || error.name || 'INTERNAL_ERROR',
         message: message,
-        code: error.name || 'INTERNAL_ERROR',
         requestId: requestId,
         timestamp: errorContext.timestamp,
       },

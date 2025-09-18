@@ -3,6 +3,7 @@ import { CreateUser, UpdateUser, Login } from './user.validation';
 import { RequestWithUser } from '../../interfaces/auth.interface';
 import UserService from './user.service';
 import HttpException from '../../utils/HttpException';
+import { ResponseFormatter } from '../../utils/responseFormatter';
 
 class UserController {
   public userService = new UserService();
@@ -16,10 +17,7 @@ class UserController {
       const userResponse = { ...user };
       delete userResponse.password;
 
-      res.status(201).json({
-        data: userResponse,
-        message: 'User registered successfully',
-      });
+      ResponseFormatter.created(res, userResponse, 'User registered successfully');
     } catch (error) {
       next(error);
     }
@@ -39,10 +37,7 @@ class UserController {
       const userResponse = { ...user };
       delete userResponse.password;
 
-      res.status(200).json({
-        data: userResponse,
-        message: 'Login successful',
-      });
+      ResponseFormatter.success(res, userResponse, 'Login successful');
     } catch (error) {
       next(error);
     }
@@ -59,10 +54,7 @@ class UserController {
         return userWithoutPassword;
       });
 
-      res.status(200).json({
-        data: usersResponse,
-        message: 'Users retrieved successfully',
-      });
+      ResponseFormatter.success(res, usersResponse, 'Users retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -82,10 +74,7 @@ class UserController {
       const userResponse = { ...user };
       delete userResponse.password;
 
-      res.status(200).json({
-        data: userResponse,
-        message: 'User retrieved successfully',
-      });
+      ResponseFormatter.success(res, userResponse, 'User retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -117,10 +106,7 @@ class UserController {
       const userResponse = { ...user };
       delete userResponse.password;
 
-      res.status(200).json({
-        data: userResponse,
-        message: 'User updated successfully',
-      });
+      ResponseFormatter.success(res, userResponse, 'User updated successfully');
     } catch (error) {
       next(error);
     }
@@ -147,9 +133,7 @@ class UserController {
 
       await this.userService.deleteUser(id, userId);
 
-      res.status(200).json({
-        message: 'User deleted successfully',
-      });
+      ResponseFormatter.success(res, null, 'User deleted successfully');
     } catch (error) {
       next(error);
     }

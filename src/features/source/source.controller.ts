@@ -3,6 +3,7 @@ import BaseSourceService from './source.service';
 import { RequestWithUser } from '../../interfaces/auth.interface';
 import HttpException from '../../utils/HttpException';
 import { CreateSource, UpdateSource } from './file/source.validation';
+import { ResponseFormatter } from '../../utils/responseFormatter';
 
 class BaseSourceController {
   public baseSourceService = new BaseSourceService();
@@ -22,7 +23,7 @@ class BaseSourceController {
 
       const sources = await this.baseSourceService.getAllSourcesByUserId(userId);
 
-      res.status(200).json({ data: sources, message: 'Sources retrieved successfully' });
+      ResponseFormatter.success(res, sources, 'Sources retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -33,7 +34,7 @@ class BaseSourceController {
       const sourceId = Number(req.params.id);
       const source = await this.baseSourceService.getSourceById(sourceId);
 
-      res.status(200).json({ data: source, message: 'Source retrieved successfully' });
+      ResponseFormatter.success(res, source, 'Source retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -50,7 +51,7 @@ class BaseSourceController {
 
       await this.baseSourceService.deleteSource(sourceId, userId);
 
-      res.status(200).json({ message: 'Source deleted successfully' });
+      ResponseFormatter.success(res, null, 'Source deleted successfully');
     } catch (error) {
       next(error);
     }
@@ -67,7 +68,7 @@ class BaseSourceController {
 
       const source = await this.baseSourceService.createSource(sourceData, userId);
 
-      res.status(201).json({ data: source, message: 'Source created successfully' });
+      ResponseFormatter.created(res, source, 'Source created successfully');
     } catch (error) {
       next(error);
     }
@@ -85,10 +86,7 @@ class BaseSourceController {
 
       const updatedSource = await this.baseSourceService.updateSource(sourceId, sourceData, userId);
 
-      res.status(200).json({
-        data: updatedSource,
-        message: 'Source updated successfully',
-      });
+      ResponseFormatter.success(res, updatedSource, 'Source updated successfully');
     } catch (error) {
       next(error);
     }

@@ -4,6 +4,7 @@ import FileSourceService from './file-source.service';
 import { RequestWithUser } from '../../../interfaces/auth.interface';
 import { uploadFile, uploadMultipleFiles } from '../../../utils/fileupload';
 import HttpException from '../../../utils/HttpException';
+import { ResponseFormatter } from '../../../utils/responseFormatter';
 
 class FileSourceController {
   public fileSourceService = new FileSourceService();
@@ -17,10 +18,7 @@ class FileSourceController {
       }
 
       const fileSources = await this.fileSourceService.getAllFileSources(userId);
-      res.status(200).json({
-        data: fileSources,
-        message: 'File sources retrieved successfully',
-      });
+      ResponseFormatter.success(res, fileSources, 'File sources retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -30,10 +28,7 @@ class FileSourceController {
     try {
       const sourceId = Number(req.params.id);
       const fileSource = await this.fileSourceService.getFileSourceById(sourceId);
-      res.status(200).json({
-        data: fileSource,
-        message: 'File source retrieved successfully',
-      });
+      ResponseFormatter.success(res, fileSource, 'File source retrieved successfully');
     } catch (error) {
       next(error);
     }
@@ -62,10 +57,11 @@ class FileSourceController {
           description,
           uploadResult
         );
-        return res.status(201).json({
-          data: fileSource,
-          message: 'File source created successfully from upload',
-        });
+        return ResponseFormatter.created(
+          res,
+          fileSource,
+          'File source created successfully from upload'
+        );
       }
       // For direct file source creation (this now requires source_id)
       throw new HttpException(400, 'File upload is required');
@@ -87,10 +83,7 @@ class FileSourceController {
         fileSourceData,
         userId
       );
-      res.status(200).json({
-        data: updatedFileSource,
-        message: 'File source updated successfully',
-      });
+      ResponseFormatter.success(res, updatedFileSource, 'File source updated successfully');
     } catch (error) {
       next(error);
     }
@@ -129,10 +122,7 @@ class FileSourceController {
         descriptions
       );
 
-      res.status(201).json({
-        data: fileSources,
-        message: 'Multiple file sources created successfully',
-      });
+      ResponseFormatter.created(res, fileSources, 'Multiple file sources created successfully');
     } catch (error) {
       next(error);
     }
@@ -164,10 +154,11 @@ class FileSourceController {
         return this.fileSourceService.createFileSourceFromUpload(userId, name, description, result);
       });
       const fileSources = await Promise.all(fileSourcePromises);
-      res.status(201).json({
-        data: fileSources,
-        message: 'Multiple file sources created successfully from upload',
-      });
+      ResponseFormatter.created(
+        res,
+        fileSources,
+        'Multiple file sources created successfully from upload'
+      );
     } catch (error) {
       next(error);
     }
