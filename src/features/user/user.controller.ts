@@ -1,143 +1,70 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { CreateUser, UpdateUser, Login } from './user.validation';
 import { RequestWithUser } from '../../interfaces/auth.interface';
 import UserService from './user.service';
 import HttpException from '../../utils/HttpException';
 import { ResponseFormatter } from '../../utils/responseFormatter';
+import { asyncHandler, parseIdParam, getUserId } from '../../utils/controllerHelpers';
+import { removePassword, removePasswords } from '../../utils/dataSanitizer';
 
 class UserController {
   public userService = new UserService();
 
-  public register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const userData: CreateUser = req.body;
-      const user = await this.userService.register(userData);
+  public register = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const userData: CreateUser = req.body;
+    const user = await this.userService.register(userData);
+    const userResponse = removePassword(user);
 
-      // Remove password from response
-      const userResponse = { ...user };
-      delete userResponse.password;
+    ResponseFormatter.created(res, userResponse, 'User registered successfully');
+  });
 
-      ResponseFormatter.created(res, userResponse, 'User registered successfully');
-    } catch (error) {
-      next(error);
+  public login = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { email, password }: Login = req.body;
+
+    if (!email || !password) {
+      throw new HttpException(400, 'Please provide both email and password');
     }
-  };
 
-  public login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const { email, password }: Login = req.body;
+    const user = await this.userService.login(email, password);
+    const userResponse = removePassword(user);
 
-      if (!email || !password) {
-        throw new HttpException(400, 'Please provide both email and password');
-      }
+    ResponseFormatter.success(res, userResponse, 'Login successful');
+  });
 
-      const user = await this.userService.login(email, password);
+  public getAllUsers = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const users = await this.userService.getAllUsers();
+    const usersResponse = removePasswords(users);
 
-      // Remove password from response
-      const userResponse = { ...user };
-      delete userResponse.password;
+    ResponseFormatter.success(res, usersResponse, 'Users retrieved successfully');
+  });
 
-      ResponseFormatter.success(res, userResponse, 'Login successful');
-    } catch (error) {
-      next(error);
-    }
-  };
+  public getUserById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const id = parseIdParam(req);
+    const user = await this.userService.getUserById(id);
+    const userResponse = removePassword(user);
 
-  public getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const users = await this.userService.getAllUsers();
+    ResponseFormatter.success(res, userResponse, 'User retrieved successfully');
+  });
 
-      // Remove passwords from response
-      const usersResponse = users.map(user => {
-        const userWithoutPassword = { ...user };
-        delete userWithoutPassword.password;
-        return userWithoutPassword;
-      });
+  public updateUser = asyncHandler(async (req: RequestWithUser, res: Response): Promise<void> => {
+    const id = parseIdParam(req);
+    const updateData: UpdateUser = req.body;
+    const userId = getUserId(req);
 
-      ResponseFormatter.success(res, usersResponse, 'Users retrieved successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
+    const user = await this.userService.updateUser(id, updateData, userId);
+    const userResponse = removePassword(user);
 
-  public getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const id = Number(req.params.id);
+    ResponseFormatter.success(res, userResponse, 'User updated successfully');
+  });
 
-      if (isNaN(id)) {
-        throw new HttpException(400, 'Invalid user ID');
-      }
+  public deleteUser = asyncHandler(async (req: RequestWithUser, res: Response): Promise<void> => {
+    const id = parseIdParam(req);
+    const userId = getUserId(req);
 
-      const user = await this.userService.getUserById(id);
+    await this.userService.deleteUser(id, userId);
 
-      // Remove password from response
-      const userResponse = { ...user };
-      delete userResponse.password;
-
-      ResponseFormatter.success(res, userResponse, 'User retrieved successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public updateUser = async (
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const id = Number(req.params.id);
-      const updateData: UpdateUser = req.body;
-
-      if (isNaN(id)) {
-        throw new HttpException(400, 'Invalid user ID');
-      }
-
-      // Get the user making the update (from auth middleware)
-      const userId = req.userId || req.user?.id;
-
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
-
-      const user = await this.userService.updateUser(id, updateData, userId);
-
-      // Remove password from response
-      const userResponse = { ...user };
-      delete userResponse.password;
-
-      ResponseFormatter.success(res, userResponse, 'User updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public deleteUser = async (
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const id = Number(req.params.id);
-
-      if (isNaN(id)) {
-        throw new HttpException(400, 'Invalid user ID');
-      }
-
-      // Get the user making the deletion (from auth middleware)
-      const userId = req.userId || req.user?.id;
-
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
-
-      await this.userService.deleteUser(id, userId);
-
-      ResponseFormatter.success(res, null, 'User deleted successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
+    ResponseFormatter.success(res, null, 'User deleted successfully');
+  });
 }
 
 export default UserController;

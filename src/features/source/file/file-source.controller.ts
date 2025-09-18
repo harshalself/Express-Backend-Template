@@ -5,41 +5,27 @@ import { RequestWithUser } from '../../../interfaces/auth.interface';
 import { uploadFile, uploadMultipleFiles } from '../../../utils/fileupload';
 import HttpException from '../../../utils/HttpException';
 import { ResponseFormatter } from '../../../utils/responseFormatter';
+import { asyncHandler, parseIdParam, getUserId } from '../../../utils/controllerHelpers';
 
 class FileSourceController {
   public fileSourceService = new FileSourceService();
 
-  public getAllFileSources = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.userId || req.user?.id;
+  public getAllFileSources = asyncHandler(async (req: RequestWithUser, res: Response) => {
+    const userId = getUserId(req);
+    const fileSources = await this.fileSourceService.getAllFileSources(userId);
+    ResponseFormatter.success(res, fileSources, 'File sources retrieved successfully');
+  });
 
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
+  public getFileSourceById = asyncHandler(async (req: Request, res: Response) => {
+    const sourceId = parseIdParam(req);
+    const fileSource = await this.fileSourceService.getFileSourceById(sourceId);
+    ResponseFormatter.success(res, fileSource, 'File source retrieved successfully');
+  });
 
-      const fileSources = await this.fileSourceService.getAllFileSources(userId);
-      ResponseFormatter.success(res, fileSources, 'File sources retrieved successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
+  public createFileSource = asyncHandler(
+    async (req: RequestWithUser, res: Response): Promise<void> => {
+      const userId = getUserId(req);
 
-  public getFileSourceById = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const sourceId = Number(req.params.id);
-      const fileSource = await this.fileSourceService.getFileSourceById(sourceId);
-      ResponseFormatter.success(res, fileSource, 'File source retrieved successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public createFileSource = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.userId || req.user?.id;
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
       // Handle multipart/form-data uploads
       if (req.file) {
         const name = req.body.name;
@@ -57,37 +43,28 @@ class FileSourceController {
           description,
           uploadResult
         );
-        return ResponseFormatter.created(
-          res,
-          fileSource,
-          'File source created successfully from upload'
-        );
+        ResponseFormatter.created(res, fileSource, 'File source created successfully from upload');
+        return;
       }
       // For direct file source creation (this now requires source_id)
       throw new HttpException(400, 'File upload is required');
-    } catch (error) {
-      next(error);
     }
-  };
+  );
 
-  public updateFileSource = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-    try {
-      const sourceId = Number(req.params.id);
+  public updateFileSource = asyncHandler(
+    async (req: RequestWithUser, res: Response): Promise<void> => {
+      const sourceId = parseIdParam(req);
       const fileSourceData: UpdateFileSource = req.body;
-      const userId = req.userId || req.user?.id;
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
+      const userId = getUserId(req);
+
       const updatedFileSource = await this.fileSourceService.updateFileSource(
         sourceId,
         fileSourceData,
         userId
       );
       ResponseFormatter.success(res, updatedFileSource, 'File source updated successfully');
-    } catch (error) {
-      next(error);
     }
-  };
+  );
 
   public createMultipleFileSources = async (
     req: RequestWithUser,

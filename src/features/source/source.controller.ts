@@ -1,96 +1,55 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import BaseSourceService from './source.service';
 import { RequestWithUser } from '../../interfaces/auth.interface';
-import HttpException from '../../utils/HttpException';
 import { CreateSource, UpdateSource } from './file/source.validation';
 import { ResponseFormatter } from '../../utils/responseFormatter';
+import { asyncHandler, parseIdParam, getUserId } from '../../utils/controllerHelpers';
 
 class BaseSourceController {
   public baseSourceService = new BaseSourceService();
 
   // Generic source methods
-  public getAllSourcesByUserId = async (
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const userId = req.userId || req.user?.id;
+  public getAllSourcesByUserId = asyncHandler(async (req: RequestWithUser, res: Response) => {
+    const userId = getUserId(req);
+    const sources = await this.baseSourceService.getAllSourcesByUserId(userId);
 
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
+    ResponseFormatter.success(res, sources, 'Sources retrieved successfully');
+  });
 
-      const sources = await this.baseSourceService.getAllSourcesByUserId(userId);
+  public getSourceById = asyncHandler(async (req: Request, res: Response) => {
+    const sourceId = parseIdParam(req);
+    const source = await this.baseSourceService.getSourceById(sourceId);
 
-      ResponseFormatter.success(res, sources, 'Sources retrieved successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
+    ResponseFormatter.success(res, source, 'Source retrieved successfully');
+  });
 
-  public getSourceById = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const sourceId = Number(req.params.id);
-      const source = await this.baseSourceService.getSourceById(sourceId);
+  public deleteSource = asyncHandler(async (req: RequestWithUser, res: Response) => {
+    const sourceId = parseIdParam(req);
+    const userId = getUserId(req);
 
-      ResponseFormatter.success(res, source, 'Source retrieved successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
+    await this.baseSourceService.deleteSource(sourceId, userId);
 
-  public deleteSource = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-    try {
-      const sourceId = Number(req.params.id);
-      const userId = req.userId || req.user?.id;
+    ResponseFormatter.success(res, null, 'Source deleted successfully');
+  });
 
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
+  public createSource = asyncHandler(async (req: RequestWithUser, res: Response) => {
+    const sourceData: CreateSource = req.body;
+    const userId = getUserId(req);
 
-      await this.baseSourceService.deleteSource(sourceId, userId);
+    const source = await this.baseSourceService.createSource(sourceData, userId);
 
-      ResponseFormatter.success(res, null, 'Source deleted successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
+    ResponseFormatter.created(res, source, 'Source created successfully');
+  });
 
-  public createSource = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-    try {
-      const sourceData: CreateSource = req.body;
-      const userId = req.userId || req.user?.id;
+  public updateSource = asyncHandler(async (req: RequestWithUser, res: Response) => {
+    const sourceId = parseIdParam(req);
+    const sourceData: UpdateSource = req.body;
+    const userId = getUserId(req);
 
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
+    const updatedSource = await this.baseSourceService.updateSource(sourceId, sourceData, userId);
 
-      const source = await this.baseSourceService.createSource(sourceData, userId);
-
-      ResponseFormatter.created(res, source, 'Source created successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public updateSource = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-    try {
-      const sourceId = Number(req.params.id);
-      const sourceData: UpdateSource = req.body;
-      const userId = req.userId || req.user?.id;
-
-      if (!userId) {
-        throw new HttpException(401, 'User authentication required');
-      }
-
-      const updatedSource = await this.baseSourceService.updateSource(sourceId, sourceData, userId);
-
-      ResponseFormatter.success(res, updatedSource, 'Source updated successfully');
-    } catch (error) {
-      next(error);
-    }
-  };
+    ResponseFormatter.success(res, updatedSource, 'Source updated successfully');
+  });
 }
 
 export default BaseSourceController;
