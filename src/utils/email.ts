@@ -8,7 +8,17 @@ interface Booking {
   bookingId: string | number;
 }
 
-const sendEmail = async (to: string, ticketImagePath: string, booking: Booking) => {
+/**
+ * Send booking confirmation email with ticket attachment
+ * @param to - Recipient email address
+ * @param ticketImagePath - Path to the ticket image file
+ * @param booking - Booking details for the email content
+ */
+export const sendEmail = async (
+  to: string,
+  ticketImagePath: string,
+  booking: Booking
+): Promise<void> => {
   try {
     const transporter = nodemailer.createTransporter({
       service: process.env.EMAIL_SERVICE || 'gmail',
@@ -46,5 +56,3 @@ const sendEmail = async (to: string, ticketImagePath: string, booking: Booking) 
     throw new Error('Error sending email');
   }
 };
-
-export default sendEmail;

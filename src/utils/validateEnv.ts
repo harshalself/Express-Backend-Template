@@ -4,7 +4,11 @@ dotenv.config({ quiet: true });
 import { cleanEnv, port, str, num } from 'envalid';
 import { logger } from './logger';
 
-const validateEnv = () => {
+/**
+ * Validate all required environment variables for the application
+ * Throws an error if any required variable is missing or invalid
+ */
+export const validateEnv = () => {
   const env = cleanEnv(process.env, {
     JWT_SECRET: str(),
     PORT: port(),
@@ -54,5 +58,3 @@ const validateEnv = () => {
   logger.info('✅ Environment variables validated.');
   return env;
 };
-
-export default validateEnv;

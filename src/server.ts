@@ -1,6 +1,6 @@
 import App from './app';
 import { logger } from './utils/logger';
-import validateEnv from './utils/validateEnv';
+import { validateEnv } from './utils/validateEnv';
 import UserRoute from './features/user/user.route';
 import BaseSourceRoute from './features/source/source.route';
 import FileSourceRoute from './features/source/file/file-source.route';

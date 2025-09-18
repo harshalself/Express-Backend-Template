@@ -8,7 +8,13 @@ if (!JWT_SECRET) {
   logger.error('JWT_SECRET environment variable is not set!');
 }
 
-export const generateToken = (payload: object, expiresIn: string = '1d') => {
+/**
+ * Generate a JWT token with the provided payload
+ * @param payload - Data to encode in the token
+ * @param expiresIn - Token expiration time (default: '1d')
+ * @returns Signed JWT token string
+ */
+export const generateToken = (payload: object, expiresIn: string = '1d'): string => {
   try {
     if (!JWT_SECRET) {
       throw new HttpException(500, 'JWT secret is not configured');
@@ -20,7 +26,12 @@ export const generateToken = (payload: object, expiresIn: string = '1d') => {
   }
 };
 
-export const verifyToken = (token: string) => {
+/**
+ * Verify and decode a JWT token
+ * @param token - JWT token string to verify
+ * @returns Decoded token payload
+ */
+export const verifyToken = (token: string): string | jwt.JwtPayload => {
   try {
     if (!JWT_SECRET) {
       throw new HttpException(500, 'JWT secret is not configured');
