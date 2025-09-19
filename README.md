@@ -1,132 +1,33 @@
 # Express Backend Template
 
-## 🧠 Overview
+A robust Express.js backend template with TypeScript, featuring user authentication and source management with file/text content handling.
 
-This is a robust Express.js backend template with TypeScript, featuring user management and source management modules. It includes authentication, database integration, and comprehensive API documentation.
-
-### Environment Configuration
-
-1. Copy the environment template:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Update the `.env` file with your actual values:
-   - **JWT_SECRET**: Generate a secure 32+ character secret
-   - **Database**: Configure either local PostgreSQL or Supabase
-   - **GROQ_API_KEY**: Get your API key from Groq
-   - **AWS Configuration**: For file uploads (Supabase S3)
-
-### Installation & Running
+## 🚀 Quick Start
 
 ```bash
 # Install dependencies
 npm install
 
+# Copy environment file
+cp .env.example .env
+
 # Start development server
 npm run dev
-
-# Build for production
-npm run build
-npm start
 ```
 
-### API Documentation
+## 📋 Features
 
-- Swagger UI: `http://localhost:8000/api-docs`
-- OpenAPI JSON: `http://localhost:8000/api-docs.json`
+- **User Management**: Registration, login, JWT authentication
+- **File Sources**: Upload and manage PDF, DOC, DOCX, TXT files with text extraction
+- **Text Sources**: Store and manage plain text content
+- **PostgreSQL Database**: Normalized schema with proper relationships
+- **AWS S3 Integration**: Secure file storage and management
+- **Security**: Rate limiting, CORS, input validation, encryption
+- **API Documentation**: Complete Swagger/OpenAPI documentation
+- **Testing**: Jest with unit and integration tests
+- **Logging**: Winston with structured logging
 
-#### Modular Documentation Structure
-
-API documentation follows a modular approach with separate YAML files for each feature:
-
-- `swagger.yaml` - Main configuration file with shared components
-- `chat.yaml` - Chat API endpoints and schemas
-- `users.yaml` - User management API endpoints and schemas
-- `agents.yaml` - Agent configuration API endpoints and schemas
-- `file-sources.yaml` - File upload/management API endpoints and schemas
-- `system.yaml` - System endpoints (health checks, etc.)
-
-To validate the API documentation structure:
-
-```bash
-npm run validate:swagger
-```
-
-## 🏗️ Project Structure
-
-```
-backend/
-├── src/
-│   ├── controllers/    # Request handlers
-│   ├── middlewares/    # Authentication, validation, etc.
-│   ├── routes/         # API route definitions
-│   ├── database/       # Database schemas and connection
-│   ├── services/       # Business logic
-│   ├── utils/          # Helper functions
-│   └── dtos/           # Data transfer objects
-├── docs/
-│   ├── swagger.yaml    # Main API documentation structure
-│   ├── swagger.ts      # Swagger configuration
-│   ├── chat.yaml       # Chat API endpoints
-│   ├── users.yaml      # User API endpoints
-│   ├── agents.yaml     # Agents API endpoints
-│   ├── file-sources.yaml  # File sources API endpoints
-│   └── system.yaml     # System API endpoints
-└── build/              # Compiled JavaScript output
-```
-
-## 🛡️ Security Features
-
-- ✅ JWT Authentication with secure token validation
-- ✅ Global authentication middleware with route exemptions
-- ✅ Input validation using class-validator
-- ✅ Rate limiting to prevent API abuse
-- ✅ CORS configured with specific origins
-- ✅ Comprehensive error handling
-- ✅ SQL injection protection
-- ✅ Environment variable validation
-- ✅ **Encrypted API Key Storage** - API keys are encrypted with salt before database storage
-- ✅ **Centralized Audit Fields** - All audit information tracked in main tables for better performance
-
-## 🗄️ Database Architecture
-
-### Normalized Database Design
-
-The database follows a normalized structure with the following key features:
-
-#### Core Tables
-
-- **users** - User accounts and authentication
-- **provider_models** - Available AI provider/model combinations
-- **agents** - AI agent configurations with encrypted API keys
-- **chat_sessions** - Chat conversation sessions
-- **sources** - Knowledge sources with centralized audit fields and processing status
-- **messages** - Individual chat messages
-
-#### Source Type Tables (Lightweight)
-
-- **file_sources** - File-based knowledge sources
-- **text_sources** - Text-based knowledge sources
-- **website_sources** - Web scraping sources
-- **database_sources** - Database connection sources
-- **qa_sources** - Question/Answer pair sources
-
-#### Key Normalization Benefits
-
-1. **API Key Security**: Encrypted storage with individual salts
-2. **Centralized Audit**: All audit fields in main `sources` table for better queries
-3. **Status Tracking**: Processing status and metadata for all sources
-4. **Performance**: Optimized with proper indexes and foreign key relationships
-
-#### Migration and Seeds
-
-- Use `npm run migrate` to set up database schema
-- Use `npm run migrate:drop` to reset and recreate all tables
-- Seeds included for development data
-
-## � API Endpoints
+## 🗂️ API Endpoints
 
 ### Authentication (Public)
 
@@ -140,36 +41,167 @@ The database follows a normalized structure with the following key features:
 - `PUT /api/v1/users/:id` - Update user
 - `DELETE /api/v1/users/:id` - Delete user
 
-### Chat (Protected)
+### Source Management (Protected)
 
-- `POST /api/v1/chat` - Send chat message
+#### Base Sources
+
+- `GET /api/v1/sources/agent/:agentId` - Get all sources for an agent
+- `POST /api/v1/sources/agent/:agentId` - Create new source
+- `GET /api/v1/sources/:id` - Get source by ID
+- `PUT /api/v1/sources/:id` - Update source
+- `DELETE /api/v1/sources/:id` - Delete source
+
+#### File Sources
+
+- `POST /api/v1/sources/file` - Upload single file
+- `POST /api/v1/sources/file/multiple` - Upload multiple files
+- `GET /api/v1/sources/file/agent/:agentId` - Get file sources for agent
+- `GET /api/v1/sources/file/:id` - Get file source by ID
+- `PUT /api/v1/sources/file/:id` - Update file source
+- `DELETE /api/v1/sources/file/:id` - Delete file source
+
+#### Text Sources
+
+- `POST /api/v1/sources/text` - Create text source
+- `GET /api/v1/sources/text/agent/:agentId` - Get text sources for agent
+- `GET /api/v1/sources/text/:id` - Get text source by ID
+- `PUT /api/v1/sources/text/:id` - Update text source
 
 ### System
 
-- `GET /health` - Health check endpoint
+- `GET /health` - Health check
 
-## � Development
+## 🗄️ Database Schema
 
-### Scripts
+```
+users (id, name, email, password, phone_number, audit_fields)
+sources (id, user_id, source_type, name, description, status, audit_fields)
+file_sources (id, source_id, file_url, mime_type, file_size, text_content)
+text_sources (id, source_id, content)
+```
 
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run test` - Run tests
+## ⚙️ Environment Setup
 
-### Database
+Create `.env` file with:
 
-The application supports both local PostgreSQL and Supabase. Configure your preferred option in the `.env` file.
+```bash
+# Server
+PORT=8000
+JWT_SECRET=your-secure-jwt-secret
 
-### Logging
+# Database
+DB_HOST=your-postgres-host
+DB_PORT=5432
+DB_USER=your-db-user
+DB_PASSWORD=your-db-password
+DB_DATABASE=your-db-name
 
-Logs are written to `src/logs/` directory with different files for different log levels.
+# AWS S3 (for file uploads)
+AWS_ACCESS_KEY=your-aws-access-key
+AWS_SECRET_KEY=your-aws-secret-key
+AWS_BUCKET_NAME=your-bucket-name
+AWS_REGION=your-region
+AWS_ENDPOINT=https://your-project.supabase.co/storage/v1/s3
 
----
+# Email (optional)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+```
 
-## 📋 Security & Issues
+## 🏗️ Project Structure
 
-For detailed security analysis and resolved issues, see [issues.md](./issues.md).
+```
+src/
+├── app.ts                 # Express app configuration
+├── server.ts             # Server bootstrap
+├── config/               # Environment configurations
+├── features/
+│   ├── user/            # User management
+│   └── source/          # Source management
+│       ├── file/        # File upload handling
+│       └── text/        # Text content handling
+├── middlewares/          # Authentication, validation, security
+├── utils/               # Helpers, services, utilities
+├── interfaces/          # TypeScript interfaces
+├── routes/              # Route definitions
+└── database/            # Database schemas and migrations
 
-**Current Status**: ✅ Production Ready - All security vulnerabilities have been addressed.
+docs/                    # Swagger documentation
+tests/                   # Unit and integration tests
+```
+
+## �️ Development Commands
+
+```bash
+# Development
+npm run dev              # Start development server
+npm run build           # Build for production
+npm start               # Start production server
+
+# Database
+npm run migrate         # Run database migrations
+
+# Testing
+npm test                # Run all tests
+npm run test:unit       # Run unit tests only
+npm run test:integration # Run integration tests only
+npm run test:coverage   # Run tests with coverage
+
+# Code Quality
+npm run lint            # Run ESLint
+npm run lint:fix        # Fix linting issues
+
+# Documentation
+npm run validate:swagger # Validate API documentation
+```
+
+## 📚 API Documentation
+
+Access Swagger UI at: `http://localhost:8000/api-docs`
+
+The API documentation is modular and organized by feature:
+
+- User management endpoints
+- File source management
+- Text source management
+- System endpoints
+
+## 🔒 Security Features
+
+- JWT authentication with secure token validation
+- Password hashing with bcrypt
+- Rate limiting on authentication endpoints
+- Input validation with Zod schemas
+- CORS configuration
+- Helmet security headers
+- SQL injection protection
+- File upload validation and size limits
+
+## 🧪 Testing
+
+The project includes comprehensive testing:
+
+- **Unit Tests**: Individual functions and utilities
+- **Integration Tests**: API endpoints with database
+- **Test Coverage**: Jest coverage reporting
+- **Pre-commit Hooks**: Automated testing on commits
+
+## 📝 File Processing
+
+Supports multiple file formats with automatic text extraction:
+
+- **PDF**: Text extraction using pdf-parse
+- **DOC/DOCX**: Text extraction using mammoth
+- **TXT**: Direct text reading
+- **Images**: QR code and barcode reading support
+
+## 🚀 Production Deployment
+
+1. Build the application: `npm run build`
+2. Set environment variables for production
+3. Run database migrations
+4. Start the server: `npm start`
+
+## � License
+
+ISC License - see package.json for details.
