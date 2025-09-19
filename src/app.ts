@@ -1,15 +1,18 @@
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import hpp from 'hpp';
-import morgan from 'morgan';
 import compression from 'compression';
 import { authRateLimit, apiRateLimit } from './middlewares/rate-limit.middleware';
 import { requestIdMiddleware } from './middlewares/request-id.middleware';
 import { securityMiddleware } from './middlewares/security.middleware';
 import { corsMiddleware } from './middlewares/cors.middleware';
+import {
+  requestLoggerMiddleware,
+  apiRequestLoggerMiddleware,
+} from './middlewares/request-logger.middleware';
 import Routes from './interfaces/route.interface';
 import errorMiddleware from './middlewares/error.middleware';
-import { logger, stream } from './utils/logger';
+import { logger } from './utils/logger';
 import authMiddleware from './middlewares/auth.middleware';
 import { setupSwagger, updateSwaggerServers } from '../docs/swagger';
 
@@ -73,11 +76,7 @@ class App {
     this.app.use(hpp());
 
     // Logging middleware
-    if (this.env === 'production') {
-      this.app.use(morgan('combined', { stream }));
-    } else if (this.env === 'development') {
-      this.app.use(morgan('dev', { stream }));
-    }
+    this.app.use(requestLoggerMiddleware);
 
     // Compression
     this.app.use(compression());
@@ -94,6 +93,9 @@ class App {
   }
 
   private initializeRoutes(routes: Routes[]) {
+    // Add logging middleware after auth for user context
+    this.app.use('/api/v1/', apiRequestLoggerMiddleware);
+
     this.app.use('/api/v1/', authMiddleware);
     routes.forEach(route => {
       this.app.use('/api/v1/', route.router);
