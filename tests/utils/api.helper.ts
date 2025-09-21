@@ -14,8 +14,8 @@ export class ApiTestHelper {
     path: string,
     token: string
   ) {
-    return request(this.app)
-      [method](path)
+    const req = request(this.app);
+    return req[method](path)
       .set('Authorization', `Bearer ${token}`)
       .set('Accept', 'application/json');
   }
