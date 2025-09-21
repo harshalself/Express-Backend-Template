@@ -1,13 +1,28 @@
 module.exports = {
-  preset: 'ts-jest',
+  // Using SWC for fast TypeScript transpilation instead of ts-jest (removes deprecated glob/inflight chain)
+  // Using V8 coverage provider to avoid Istanbul dependencies (babel-plugin-istanbul -> test-exclude -> glob -> inflight)
+  coverageProvider: 'v8',
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
     '^.+\\.ts$': [
-      'ts-jest',
+      '@swc/jest',
       {
-        useESM: false,
+        jsc: {
+          target: 'es2022',
+          parser: {
+            syntax: 'typescript',
+            decorators: true,
+          },
+          transform: {
+            legacyDecorator: true,
+          },
+        },
+        module: {
+          type: 'commonjs',
+        },
+        sourceMaps: 'inline',
       },
     ],
   },
