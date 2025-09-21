@@ -10,7 +10,7 @@
 
 import path from 'path';
 import fs from 'fs';
-import YAML from 'yamljs';
+import { parse as parseYaml } from 'yaml';
 import { logger } from '../src/utils/logger';
 
 interface ModuleInfo {
@@ -43,7 +43,7 @@ class SwaggerValidator {
   private loadMainSwagger(): void {
     try {
       const swaggerPath = path.join(this.docsDir, 'swagger.yaml');
-      this.swaggerDocument = YAML.load(swaggerPath);
+      this.swaggerDocument = parseYaml(fs.readFileSync(swaggerPath, 'utf8'));
       logger.info('✅ Main swagger.yaml loaded successfully');
     } catch (error) {
       logger.error('❌ Failed to load main swagger.yaml:', error);
@@ -61,7 +61,7 @@ class SwaggerValidator {
       files.forEach(file => {
         try {
           const modulePath = path.join(this.docsDir, file);
-          const moduleDoc = YAML.load(modulePath);
+          const moduleDoc = parseYaml(fs.readFileSync(modulePath, 'utf8'));
           this.modules.push({
             name: file.replace('.yaml', ''),
             path: file,

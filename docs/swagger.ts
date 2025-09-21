@@ -1,5 +1,5 @@
 import swaggerUi from 'swagger-ui-express';
-import YAML from 'yamljs';
+import { parse as parseYaml } from 'yaml';
 import fs from 'fs';
 import path from 'path';
 import { Application } from 'express';
@@ -30,7 +30,7 @@ class SwaggerConfig {
       // Enhanced YAML parse error logging for main swagger.yaml
       const swaggerPath = path.join(__dirname, 'swagger.yaml');
       try {
-        this.swaggerDocument = YAML.load(swaggerPath);
+        this.swaggerDocument = parseYaml(fs.readFileSync(swaggerPath, 'utf8'));
       } catch (err: unknown) {
         const error = err as Error & {
           mark?: { name?: string; line: number; column: number };
@@ -52,21 +52,21 @@ class SwaggerConfig {
       const apiModules = [
         {
           name: 'Sources',
-          path: path.join('..', 'src', 'features', 'source', 'sources.yaml'),
+          path: path.join('sources.yaml'),
         },
         {
           name: 'File Sources',
-          path: path.join('..', 'src', 'features', 'source', 'file', 'file-sources.yaml'),
+          path: path.join('file-sources.yaml'),
         },
         {
           name: 'Text Sources',
-          path: path.join('..', 'src', 'features', 'source', 'text', 'text-sources.yaml'),
+          path: path.join('text-sources.yaml'),
         },
         {
           name: 'Users',
-          path: path.join('..', 'src', 'features', 'user', 'users.yaml'),
+          path: path.join('users.yaml'),
         },
-        { name: 'System', path: path.join('..', 'docs', 'system.yaml') },
+        { name: 'System', path: path.join('system.yaml') },
       ];
 
       // Process each API module
@@ -75,7 +75,7 @@ class SwaggerConfig {
           const modulePath = path.join(__dirname, module.path);
           let moduleDoc;
           try {
-            moduleDoc = YAML.load(modulePath);
+            moduleDoc = parseYaml(fs.readFileSync(modulePath, 'utf8'));
           } catch (err: unknown) {
             const error = err as Error & {
               mark?: { name?: string; line: number; column: number };

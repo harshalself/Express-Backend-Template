@@ -12,7 +12,6 @@ export const validateEnv = () => {
   const env = cleanEnv(process.env, {
     JWT_SECRET: str(),
     PORT: port(),
-    GROQ_API_KEY: str(),
 
     // Database configuration
     DB_HOST: str(),
@@ -22,18 +21,10 @@ export const validateEnv = () => {
     DB_PORT: num(),
     SCHEMA_NAME: str(),
 
-    // Pinecone configuration
-    PINECONE_API_KEY: str(),
-
     // Redis configuration
     REDIS_HOST: str(),
     REDIS_PORT: num(),
     REDIS_PASSWORD: str(),
-
-    // Queue configuration
-    TRAINING_QUEUE_NAME: str(),
-    MAX_CONCURRENT_JOBS: num(),
-    JOB_TIMEOUT: num(),
 
     // AWS S3 configuration
     AWS_ACCESS_KEY: str(),

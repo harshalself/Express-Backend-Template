@@ -6,7 +6,6 @@ import BaseSourceRoute from './features/source/source.route';
 import FileSourceRoute from './features/source/file/file-source.route';
 import TextSourceRoute from './features/source/text/text-source.route';
 import { testDbConnection } from './utils/testdbConnection';
-import { testRedisConnection } from './utils/redis';
 
 validateEnv();
 
@@ -17,8 +16,9 @@ async function bootstrap() {
     // Check DB connection
     await testDbConnection();
 
-    // Initialize Redis connection (optional)
-    await testRedisConnection();
+    // Initialize Redis connection (optional - skip for now)
+    logger.info('ℹ️ Redis connection skipped during startup (optional service)');
+    // await testRedisConnection();
 
     // Start Express app
     const app = new App([

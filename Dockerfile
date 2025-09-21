@@ -1,6 +1,10 @@
 # Use Node.js 18 Alpine as base image
 FROM node:18-alpine AS builder
 
+# Add security updates and tools
+RUN apk add --no-cache wget && \
+    apk update && apk upgrade
+
 # Set working directory
 WORKDIR /app
 
@@ -8,7 +12,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install all dependencies (including dev dependencies for building)
-RUN npm ci --only=production=false
+RUN npm ci --include=dev
 
 # Copy source code
 COPY . .
@@ -19,6 +23,10 @@ RUN npm run build
 # Production stage
 FROM node:18-alpine AS production
 
+# Add security updates and health check tool
+RUN apk add --no-cache wget && \
+    apk update && apk upgrade
+
 # Set working directory
 WORKDIR /app
 
@@ -26,7 +34,7 @@ WORKDIR /app
 COPY --from=builder /app/package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy built application
 COPY --from=builder /app/build ./build
@@ -43,12 +51,12 @@ RUN chown -R nodejs:nodejs /app
 # Switch to non-root user
 USER nodejs
 
-# Expose port
-EXPOSE 3000
+# Expose correct port (app uses 8000)
+EXPOSE 8000
 
-# Health check
+# Health check using app's built-in endpoint
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node healthcheck.js || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
 
 # Start the application
 CMD ["npm", "start"]
