@@ -1,71 +1,41 @@
 # Express Backend Template
 
-A robust Express.js backend template with TypeScript, featuring user authentication and source management with file/text content handling.
+A robust, production-ready Express.js backend with TypeScript, featuring user authentication, file/text content management, and modern tooling.
 
 ## 🚀 Quick Start
 
 ```bash
-# Install dependencies
 npm install
-
-# Copy environment file
 cp .env.example .env
-
-# Start development server
 npm run dev
 ```
 
 ## 📋 Features
 
-- **User Management**: Registration, login, JWT authentication
-- **File Sources**: Upload and manage PDF, DOC, DOCX, TXT files with text extraction
-- **Text Sources**: Store and manage plain text content
-- **PostgreSQL Database**: Normalized schema with proper relationships
-- **AWS S3 Integration**: Secure file storage and management
-- **Security**: Rate limiting, CORS, input validation, encryption
-- **API Documentation**: Complete Swagger/OpenAPI documentation
-- **Testing**: Jest with unit and integration tests
-- **Logging**: Winston with structured logging
+- **Authentication**: JWT-based user registration/login
+- **File Management**: PDF, DOC, DOCX, TXT upload with text extraction
+- **Text Content**: CRUD operations for plain text sources
+- **Database**: PostgreSQL with Knex.js migrations
+- **Storage**: AWS S3 compatible (Supabase)
+- **Caching**: Optional Redis integration
+- **Security**: Rate limiting, CORS, input validation, helmet
+- **Documentation**: Modular Swagger/OpenAPI 3.0
+- **Testing**: Jest with unit/integration tests
+- **Docker**: Multi-stage builds for dev/prod
 
 ## 🗂️ API Endpoints
 
-### Authentication (Public)
+### Public
 
 - `POST /api/v1/users/register` - User registration
 - `POST /api/v1/users/login` - User login
 
-### User Management (Protected)
+### Protected
 
-- `GET /api/v1/users` - Get all users
-- `GET /api/v1/users/:id` - Get user by ID
-- `PUT /api/v1/users/:id` - Update user
-- `DELETE /api/v1/users/:id` - Delete user
-
-### Source Management (Protected)
-
-#### Base Sources
-
-- `GET /api/v1/sources/agent/:agentId` - Get all sources for an agent
-- `POST /api/v1/sources/agent/:agentId` - Create new source
-- `GET /api/v1/sources/:id` - Get source by ID
-- `PUT /api/v1/sources/:id` - Update source
-- `DELETE /api/v1/sources/:id` - Delete source
-
-#### File Sources
-
-- `POST /api/v1/sources/file` - Upload single file
-- `POST /api/v1/sources/file/multiple` - Upload multiple files
-- `GET /api/v1/sources/file/agent/:agentId` - Get file sources for agent
-- `GET /api/v1/sources/file/:id` - Get file source by ID
-- `PUT /api/v1/sources/file/:id` - Update file source
-- `DELETE /api/v1/sources/file/:id` - Delete file source
-
-#### Text Sources
-
-- `POST /api/v1/sources/text` - Create text source
-- `GET /api/v1/sources/text/agent/:agentId` - Get text sources for agent
-- `GET /api/v1/sources/text/:id` - Get text source by ID
-- `PUT /api/v1/sources/text/:id` - Update text source
+- `GET /api/v1/users` - List users
+- `GET /api/v1/sources/agent/:agentId` - Get sources
+- `POST /api/v1/sources/file` - Upload files
+- `POST /api/v1/sources/text` - Create text sources
 
 ### System
 
@@ -73,135 +43,105 @@ npm run dev
 
 ## 🗄️ Database Schema
 
-```
+```sql
 users (id, name, email, password, phone_number, audit_fields)
-sources (id, user_id, source_type, name, description, status, audit_fields)
-file_sources (id, source_id, file_url, mime_type, file_size, text_content)
-text_sources (id, source_id, content)
+sources (id, user_id, source_type, name, status, is_embedded, audit_fields)
+file_sources (id, source_id, file_url, mime_type, text_content, audit_fields)
+text_sources (id, source_id, content, audit_fields)
 ```
+
+**Features**: Audit fields, soft deletes, referential integrity, embedding support.
 
 ## ⚙️ Environment Setup
 
-Create `.env` file with:
+Create `.env` with:
 
 ```bash
-# Server
+JWT_SECRET=your-256-bit-secret
 PORT=8000
-JWT_SECRET=your-secure-jwt-secret
-
-# Database
-DB_HOST=your-postgres-host
-DB_PORT=5432
-DB_USER=your-db-user
-DB_PASSWORD=your-db-password
-DB_DATABASE=your-db-name
-
-# AWS S3 (for file uploads)
-AWS_ACCESS_KEY=your-aws-access-key
-AWS_SECRET_KEY=your-aws-secret-key
-AWS_BUCKET_NAME=your-bucket-name
-AWS_REGION=your-region
-AWS_ENDPOINT=https://your-project.supabase.co/storage/v1/s3
-
-# Email (optional)
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASSWORD=your-app-password
+DB_HOST=postgres-host
+DB_USER=db-user
+DB_PASSWORD=db-password
+DB_DATABASE=db-name
+REDIS_HOST=redis-host (optional)
+AWS_ACCESS_KEY=key
+AWS_SECRET_KEY=secret
+AWS_BUCKET_NAME=bucket
 ```
+
+**Files**: `.env` (dev), `.env.prod` (prod), `.env.example` (template)
 
 ## 🏗️ Project Structure
 
 ```
 src/
-├── app.ts                 # Express app configuration
-├── server.ts             # Server bootstrap
-├── config/               # Environment configurations
-├── features/
-│   ├── user/            # User management
-│   └── source/          # Source management
-│       ├── file/        # File upload handling
-│       └── text/        # Text content handling
-├── middlewares/          # Authentication, validation, security
-├── utils/               # Helpers, services, utilities
-├── interfaces/          # TypeScript interfaces
-├── routes/              # Route definitions
-└── database/            # Database schemas and migrations
+├── app.ts, server.ts     # App setup and bootstrap
+├── features/             # User and source management
+├── middlewares/          # Auth, validation, security
+├── utils/               # Logger, redis, email, validation
+├── interfaces/          # TypeScript definitions
+└── routes/              # Route definitions
 
+database/                # Schemas and migrations
 docs/                    # Swagger documentation
 tests/                   # Unit and integration tests
+scripts/                 # Utility scripts
 ```
 
-## �️ Development Commands
+## 🛠️ Commands
 
 ```bash
 # Development
-npm run dev              # Start development server
+npm run dev              # Start dev server
 npm run build           # Build for production
 npm start               # Start production server
 
 # Database
-npm run migrate         # Run database migrations
+npx ts-node database/migrate.schema.ts  # Run migrations
 
 # Testing
 npm test                # Run all tests
-npm run test:unit       # Run unit tests only
-npm run test:integration # Run integration tests only
-npm run test:coverage   # Run tests with coverage
+npm run test:coverage   # With coverage
 
-# Code Quality
-npm run lint            # Run ESLint
-npm run lint:fix        # Fix linting issues
-
-# Documentation
-npm run validate:swagger # Validate API documentation
+# Quality
+npm run lint            # Lint code
+npm run validate:swagger # Validate docs
 ```
 
-## 📚 API Documentation
+## Deployment
 
-Access Swagger UI at: `http://localhost:8000/api-docs`
+### Docker
 
-The API documentation is modular and organized by feature:
+```bash
+# Development
+docker-compose up -d
 
-- User management endpoints
-- File source management
-- Text source management
-- System endpoints
+# Production
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-## 🔒 Security Features
+### Production Checklist
 
-- JWT authentication with secure token validation
-- Password hashing with bcrypt
-- Rate limiting on authentication endpoints
-- Input validation with Zod schemas
-- CORS configuration
-- Helmet security headers
-- SQL injection protection
-- File upload validation and size limits
+- [ ] Configure `.env.prod`
+- [ ] Run database migrations
+- [ ] Setup SSL certificates
+- [ ] Configure monitoring
 
-## 🧪 Testing
+## 🔧 Tech Stack
 
-The project includes comprehensive testing:
+- **Runtime**: Node.js 18+, Express 5.x, TypeScript 5.7+
+- **Database**: PostgreSQL + Knex.js
+- **Auth**: JWT + bcrypt
+- **Validation**: Zod schemas
+- **Storage**: AWS S3 SDK v3
+- **Testing**: Jest + SWC + V8 coverage
+- **Linting**: ESLint 9 + Prettier 3
+- **Docker**: Multi-stage Alpine builds
 
-- **Unit Tests**: Individual functions and utilities
-- **Integration Tests**: API endpoints with database
-- **Test Coverage**: Jest coverage reporting
-- **Pre-commit Hooks**: Automated testing on commits
+## � Documentation
 
-## 📝 File Processing
+Interactive API docs at: `http://localhost:8000/api-docs`
 
-Supports multiple file formats with automatic text extraction:
+---
 
-- **PDF**: Text extraction using pdf-parse
-- **DOC/DOCX**: Text extraction using mammoth
-- **TXT**: Direct text reading
-- **Images**: QR code and barcode reading support
-
-## 🚀 Production Deployment
-
-1. Build the application: `npm run build`
-2. Set environment variables for production
-3. Run database migrations
-4. Start the server: `npm start`
-
-## � License
-
-ISC License - see package.json for details.
+**Built with ❤️ for modern Node.js development**
