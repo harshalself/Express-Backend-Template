@@ -13,16 +13,16 @@ export class ApiTestHelper {
     method: 'get' | 'post' | 'put' | 'delete',
     path: string,
     token: string
-  ) {
+  ): Promise<any> {
     const req = request(this.app);
-    return req[method](path)
+    return (req[method](path) as any)
       .set('Authorization', `Bearer ${token}`)
       .set('Accept', 'application/json');
   }
 
   // Helper for GET requests
-  async get(path: string, token?: string) {
-    const req = request(this.app).get(path).set('Accept', 'application/json');
+  async get(path: string, token?: string): Promise<any> {
+    const req = (request(this.app).get(path) as any).set('Accept', 'application/json');
     if (token) {
       req.set('Authorization', `Bearer ${token}`);
     }
@@ -30,9 +30,8 @@ export class ApiTestHelper {
   }
 
   // Helper for POST requests
-  async post(path: string, data: Record<string, unknown>, token?: string) {
-    const req = request(this.app)
-      .post(path)
+  async post(path: string, data: Record<string, unknown>, token?: string): Promise<any> {
+    const req = (request(this.app).post(path) as any)
       .send(data)
       .set('Accept', 'application/json')
       .set('Content-Type', 'application/json');
@@ -44,9 +43,8 @@ export class ApiTestHelper {
   }
 
   // Helper for PUT requests
-  async put(path: string, data: Record<string, unknown>, token?: string) {
-    const req = request(this.app)
-      .put(path)
+  async put(path: string, data: Record<string, unknown>, token?: string): Promise<any> {
+    const req = (request(this.app).put(path) as any)
       .send(data)
       .set('Accept', 'application/json')
       .set('Content-Type', 'application/json');
@@ -58,8 +56,8 @@ export class ApiTestHelper {
   }
 
   // Helper for DELETE requests
-  async delete(path: string, token?: string) {
-    const req = request(this.app).delete(path).set('Accept', 'application/json');
+  async delete(path: string, token?: string): Promise<any> {
+    const req = (request(this.app).delete(path) as any).set('Accept', 'application/json');
     if (token) {
       req.set('Authorization', `Bearer ${token}`);
     }
@@ -67,10 +65,32 @@ export class ApiTestHelper {
   }
 
   // Helper for file upload requests
-  async uploadFile(path: string, fieldName: string, filePath: string, token?: string) {
-    const req = request(this.app)
-      .post(path)
+  async uploadFile(
+    path: string,
+    fieldName: string,
+    filePath: string,
+    token?: string
+  ): Promise<any> {
+    const req = (request(this.app).post(path) as any)
       .attach(fieldName, filePath)
+      .set('Accept', 'application/json');
+
+    if (token) {
+      req.set('Authorization', `Bearer ${token}`);
+    }
+    return req;
+  }
+
+  // Helper for file upload with buffer
+  async uploadFileBuffer(
+    path: string,
+    fieldName: string,
+    buffer: Buffer,
+    filename: string,
+    token?: string
+  ): Promise<any> {
+    const req = (request(this.app).post(path) as any)
+      .attach(fieldName, buffer, filename)
       .set('Accept', 'application/json');
 
     if (token) {

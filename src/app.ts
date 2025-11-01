@@ -6,15 +6,11 @@ import { authRateLimit, apiRateLimit } from './middlewares/rate-limit.middleware
 import { requestIdMiddleware } from './middlewares/request-id.middleware';
 import { securityMiddleware } from './middlewares/security.middleware';
 import { corsMiddleware } from './middlewares/cors.middleware';
-import {
-  requestLoggerMiddleware,
-  apiRequestLoggerMiddleware,
-} from './middlewares/request-logger.middleware';
+import { requestLoggerMiddleware } from './middlewares/request-logger.middleware';
 import Routes from './interfaces/route.interface';
 import errorMiddleware from './middlewares/error.middleware';
 import { logger } from './utils/logger';
-import authMiddleware from './middlewares/auth.middleware';
-import { setupSwagger, updateSwaggerServers } from '../docs/swagger';
+import { setupSwagger, updateSwaggerServers } from '../swagger-docs/swagger';
 
 class App {
   public app: express.Application;
@@ -55,11 +51,12 @@ class App {
 
   public listen() {
     const port = Number(this.port);
-    this.app.listen(port, '0.0.0.0', () => {
+    const server = this.app.listen(port, '0.0.0.0', () => {
       logger.info(
         `🚀 Express Backend Template API listening on port ${port}. Environment: ${this.env}.`
       );
     });
+    return server;
   }
 
   public getServer() {
@@ -90,13 +87,12 @@ class App {
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ limit: '10mb', extended: true }));
     this.app.use(cookieParser());
+
+    // All middleware initialized
   }
 
   private initializeRoutes(routes: Routes[]) {
-    // Add logging middleware after auth for user context
-    this.app.use('/api/v1/', apiRequestLoggerMiddleware);
-
-    this.app.use('/api/v1/', authMiddleware);
+    // Routes now handle auth individually with requireAuth
     routes.forEach(route => {
       this.app.use('/api/v1/', route.router);
     });

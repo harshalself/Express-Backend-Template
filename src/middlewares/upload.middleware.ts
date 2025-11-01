@@ -1,6 +1,6 @@
 import multer from 'multer';
 import { Request, Response, NextFunction } from 'express';
-import HttpException from '../utils/HttpException';
+import HttpException from '../utils/httpException';
 
 // Extend Express Request type to include file and files properties
 declare module 'express' {
@@ -10,19 +10,21 @@ declare module 'express' {
   }
 }
 
+// Configuration constants
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+// Allowed file types - configurable via environment variable
+const ALLOWED_FILE_TYPES = process.env.ALLOWED_FILE_TYPES
+  ? process.env.ALLOWED_FILE_TYPES.split(',').map(type => type.trim())
+  : [
+      'application/pdf',
+      'text/plain',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+
 // Configure storage
 const storage = multer.memoryStorage(); // Store files in memory, not on disk
-
-// Define allowed file types
-const ALLOWED_FILE_TYPES = [
-  'application/pdf',
-  'text/plain',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
-
-// Define file size limits
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 // File filter function to validate mime types
 const fileFilter = (req: Request, file: multer.Multer.File, cb: multer.FileFilterCallback) => {
@@ -46,64 +48,42 @@ const upload = multer({
   },
 });
 
-// Middleware for single file upload
+/**
+ * Common error handling function for multer errors
+ */
+const handleMulterError = (err: Error | multer.MulterError, next: NextFunction) => {
+  if (err instanceof multer.MulterError) {
+    // A Multer error occurred when uploading
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      next(
+        new HttpException(
+          400,
+          `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`
+        )
+      );
+    } else {
+      next(new HttpException(400, err.message));
+    }
+  } else {
+    // An unknown error occurred
+    next(new HttpException(400, err.message));
+  }
+};
+
+/**
+ * Middleware for single file upload
+ * Validates file presence and handles upload errors
+ */
 export const uploadSingleFileMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const multerSingle = upload.single('file');
 
   multerSingle(req, res, err => {
     if (err) {
-      if (err instanceof multer.MulterError) {
-        // A Multer error occurred when uploading
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          next(
-            new HttpException(
-              400,
-              `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`
-            )
-          );
-        } else {
-          next(new HttpException(400, err.message));
-        }
-      } else {
-        // An unknown error occurred
-        next(new HttpException(400, err.message));
-      }
+      handleMulterError(err, next);
     } else {
       // Check if file exists
       if (!req.file) {
         return next(new HttpException(400, 'No file uploaded'));
-      }
-      next();
-    }
-  });
-};
-
-// Middleware for multiple files upload
-export const uploadMultipleFilesMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const multerArray = upload.array('files', 10); // Max 10 files
-
-  multerArray(req, res, err => {
-    if (err) {
-      if (err instanceof multer.MulterError) {
-        // A Multer error occurred when uploading
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          next(
-            new HttpException(
-              400,
-              `File size exceeds maximum allowed size of ${MAX_FILE_SIZE / (1024 * 1024)}MB`
-            )
-          );
-        } else {
-          next(new HttpException(400, err.message));
-        }
-      } else {
-        // An unknown error occurred
-        next(new HttpException(400, err.message));
-      }
-    } else {
-      // Check if files exist
-      if (!req.files || req.files.length === 0) {
-        return next(new HttpException(400, 'No files uploaded'));
       }
       next();
     }

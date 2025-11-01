@@ -1,52 +1,61 @@
+import cors from 'cors';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 
 /**
- * Enhanced CORS middleware with environment-based configuration
- * Handles cross-origin requests with configurable allowed origins
+ * Get allowed origins from environment or use defaults
+ */
+const getAllowedOrigins = (): string[] => {
+  const envOrigins = process.env.ALLOWED_ORIGINS;
+  if (envOrigins) {
+    return envOrigins.split(',').map(origin => origin.trim());
+  }
+  return ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:8081'];
+};
+
+/**
+ * CORS middleware using the standard cors package
+ * Configured for security with environment-based allowed origins
  */
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(origin => origin.trim()) || [
-    'http://localhost:3000',
-    'http://localhost:8080',
-    'http://localhost:8081',
-  ];
-
+  const allowedOrigins = getAllowedOrigins();
   const origin = req.headers.origin;
 
-  // Log CORS requests for monitoring
+  // Log rejected origins for monitoring (before cors handles it)
   if (origin && !allowedOrigins.includes(origin)) {
     logger.warn(`CORS: Rejected origin ${origin}`, {
+      origin,
+      allowedOrigins,
       ip: req.ip,
       userAgent: req.get('User-Agent'),
       requestId: (req as { requestId?: string }).requestId,
     });
   }
 
-  // Allow requests without origin (like Postman, mobile apps)
-  if (!origin) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  } else if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // Reject unauthorized origins
-    res.status(403).json({
-      error: 'CORS: Origin not allowed',
-      requestId: (req as { requestId?: string }).requestId,
-    });
-    return;
-  }
+  // Use cors package with proper configuration
+  const corsHandler = cors({
+    origin: (origin, callback) => {
+      // Allow requests without origin (like Postman, mobile apps, server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
 
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Request-ID');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+      // Check if origin is allowed
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+      // Reject unauthorized origins
+      // Note: CORS package expects Error instances, not custom exceptions
+      // The error middleware will handle converting this to proper HttpException response
+      return callback(new Error('CORS: Origin not allowed'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    maxAge: 86400, // 24 hours
+    optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+  });
 
-  next();
+  corsHandler(req, res, next);
 };

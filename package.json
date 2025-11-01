@@ -8,7 +8,7 @@
     "start": "cross-env NODE_ENV=production node build/src/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc && npm run postbuild",
-    "postbuild": "cpy 'docs/**/*' build/docs",
+    "postbuild": "cpy 'swagger-docs/**/*' build/docs",
     "test": "jest --forceExit --detectOpenHandles",
     "test:watch": "jest --watch",
     "test:unit": "jest --testPathPatterns='unit' --forceExit --detectOpenHandles",
@@ -16,7 +16,16 @@
     "test:coverage": "jest --coverage --forceExit --detectOpenHandles",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "validate:swagger": "ts-node docs/validate-swagger.ts",
+    "validate:swagger": "ts-node swagger-docs/validate-swagger.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/database/migrate.ts",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/database/seed.ts",
+    "db:drop": "drizzle-kit drop",
+    "db:test": "tsx src/database/health.ts",
+    "db:check": "drizzle-kit check",
+    "db:up": "drizzle-kit up",
     "prepare": "husky",
     "pre-commit": "lint-staged"
   },
@@ -32,6 +41,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.856.0",
     "@aws-sdk/lib-storage": "^3.850.0",
+    "@types/pg": "^8.15.6",
     "axios": "^1.11.0",
     "bcrypt": "^6.0.0",
     "compression": "^1.8.0",
@@ -39,20 +49,21 @@
     "cors": "^2.8.5",
     "cross-env": "^10.0.0",
     "dotenv": "^17.2.1",
+    "drizzle-orm": "^0.44.7",
     "envalid": "^8.0.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
     "helmet": "^8.0.0",
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.2",
-    "knex": "^3.1.0",
     "mammoth": "^1.10.0",
     "morgan": "^1.10.0",
     "multer": "^2.0.0",
     "nodemailer": "^7.0.3",
     "nodemon": "^3.1.10",
     "pdf-parse": "^1.1.1",
-    "pg": "^8.13.3",
+    "pg": "^8.16.3",
+    "rate-limit-redis": "^4.2.3",
     "redis": "^5.8.0",
     "swagger-ui-express": "^5.0.1",
     "ts-node": "^10.9.2",
@@ -64,6 +75,8 @@
     "zod": "^4.1.9"
   },
   "devDependencies": {
+    "@swc/core": "^1.10.0",
+    "@swc/jest": "^0.2.36",
     "@types/bcrypt": "^6.0.0",
     "@types/compression": "^1.7.5",
     "@types/cookie-parser": "^1.4.8",
@@ -78,6 +91,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "cpy-cli": "^6.0.0",
+    "drizzle-kit": "^0.31.6",
     "eslint": "^9.30.1",
     "globals": "^16.3.0",
     "husky": "^9.1.7",
@@ -85,8 +99,7 @@
     "lint-staged": "^16.1.6",
     "prettier": "^3.6.2",
     "supertest": "^7.1.4",
-    "@swc/core": "^1.10.0",
-    "@swc/jest": "^0.2.36",
+    "tsx": "^4.20.6",
     "typescript-eslint": "^8.35.1"
   },
   "lint-staged": {
@@ -98,6 +111,7 @@
   },
   "overrides": {
     "glob": "^10.4.5",
-    "test-exclude": "^7.0.1"
+    "test-exclude": "^7.0.1",
+    "esbuild": "^0.25.0"
   }
 }

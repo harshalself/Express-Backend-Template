@@ -1,11 +1,30 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
-import HttpException from './HttpException';
+import HttpException from './httpException';
 import { logger } from './logger';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+// Cache JWT secret for performance
+let jwtSecret: string;
 
-if (!JWT_SECRET) {
-  logger.error('JWT_SECRET environment variable is not set!');
+/**
+ * Get cached JWT secret, loading from environment if needed
+ */
+const getJWTSecret = (): string => {
+  if (!jwtSecret) {
+    jwtSecret = process.env.JWT_SECRET || '';
+    if (!jwtSecret) {
+      logger.error('JWT_SECRET environment variable is not configured');
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+  }
+  return jwtSecret;
+};
+
+// Validate JWT secret on module load
+try {
+  getJWTSecret();
+} catch (error) {
+  logger.error('JWT utility initialization failed:', (error as Error).message);
+  process.exit(1);
 }
 
 /**
@@ -16,29 +35,46 @@ if (!JWT_SECRET) {
  */
 export const generateToken = (payload: object, expiresIn: string = '1d'): string => {
   try {
-    if (!JWT_SECRET) {
-      throw new HttpException(500, 'JWT secret is not configured');
-    }
-    return jwt.sign(payload, JWT_SECRET, { expiresIn } as SignOptions);
-  } catch (error: unknown) {
+    const secret = getJWTSecret();
+    return jwt.sign(payload, secret, { expiresIn } as SignOptions);
+  } catch (error) {
     const err = error as Error;
+    logger.error('Error generating token:', err);
     throw new HttpException(500, `Error generating token: ${err.message}`);
   }
 };
 
 /**
+ * Generate an access token (short-lived)
+ * @param payload - User data to encode
+ * @returns Access token with 15-minute expiration
+ */
+export const generateAccessToken = (payload: object): string => {
+  return generateToken(payload, '15m');
+};
+
+/**
+ * Generate a refresh token (long-lived)
+ * @param payload - User ID to encode
+ * @returns Refresh token with 7-day expiration
+ */
+export const generateRefreshToken = (payload: object): string => {
+  return generateToken(payload, '7d');
+};
+
+/**
  * Verify and decode a JWT token
- * @param token - JWT token string to verify
+ * @param payload - JWT token string to verify
  * @returns Decoded token payload
  */
 export const verifyToken = (token: string): string | jwt.JwtPayload => {
   try {
-    if (!JWT_SECRET) {
-      throw new HttpException(500, 'JWT secret is not configured');
-    }
-    return jwt.verify(token, JWT_SECRET);
-  } catch (error: unknown) {
+    const secret = getJWTSecret();
+    return jwt.verify(token, secret);
+  } catch (error) {
     const err = error as Error;
+    logger.error('Token verification error:', err);
+
     if (err.name === 'TokenExpiredError') {
       throw new HttpException(401, 'Token has expired');
     }

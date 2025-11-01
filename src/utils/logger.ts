@@ -4,7 +4,7 @@ import winstonDaily from 'winston-daily-rotate-file';
 import path from 'path';
 
 // logs dir (always at project root)
-const logDir = path.resolve(__dirname, '../../../logs');
+const logDir = path.join(process.cwd(), 'logs');
 
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);

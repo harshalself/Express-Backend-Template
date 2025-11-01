@@ -19,15 +19,15 @@ export class UniversalUuid {
       random1.toString(16).padStart(8, '0') +
       random2.toString(16).padStart(8, '0') +
       random3.toString(16).padStart(8, '0')
-    ).substr(0, 32);
+    ).substring(0, 32);
 
     // Format as UUID v4: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
     return [
-      hex.substr(0, 8),
-      hex.substr(8, 4),
-      '4' + hex.substr(13, 3), // Version 4
-      ((parseInt(hex.substr(16, 1), 16) & 0x3) | 0x8).toString(16) + hex.substr(17, 3), // Variant bits
-      hex.substr(20, 12),
+      hex.substring(0, 8),
+      hex.substring(8, 4),
+      '4' + hex.substring(13, 3), // Version 4
+      ((parseInt(hex.substring(16, 1), 16) & 0x3) | 0x8).toString(16) + hex.substring(17, 3), // Variant bits
+      hex.substring(20, 12),
     ].join('-');
   }
 

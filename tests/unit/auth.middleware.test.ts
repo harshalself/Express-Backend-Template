@@ -1,132 +1,141 @@
-import { Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import authMiddleware from '../../src/middlewares/auth.middleware';
-import HttpException from '../../src/utils/HttpException';
-import { RequestWithUser } from '../../src/interfaces/auth.interface';
+import { Request, Response, NextFunction } from 'express';
+import { requireAuth } from '../../src/middlewares/auth.middleware';
+import { verifyToken } from '../../src/utils/jwt';
+import HttpException from '../../src/utils/httpException';
+import { RequestWithUser } from '../../src/interfaces/request.interface';
+
+jest.mock('../../src/utils/jwt');
 
 describe('Auth Middleware', () => {
-  let req: Partial<RequestWithUser> & { path: string; headers: Record<string, string> };
-  let res: Partial<Response>;
-  let next: NextFunction;
+  let mockRequest: Partial<RequestWithUser>;
+  let mockResponse: Partial<Response>;
+  let nextFunction: NextFunction;
+  const mockVerifyToken = verifyToken as jest.MockedFunction<typeof verifyToken>;
 
   beforeEach(() => {
-    req = { path: '/users', headers: {} };
-    res = {};
-    next = jest.fn();
-    process.env.JWT_SECRET = 'test-jwt-secret';
+    mockRequest = {
+      headers: {},
+    };
+    mockResponse = {};
+    nextFunction = jest.fn();
+    jest.clearAllMocks();
   });
 
-  describe('exempt routes', () => {
-    const exemptRoutes = [
-      '/users/register',
-      '/users/login',
-      '/health',
-      '/api-docs',
-      '/api-docs.json',
-      '/api-docs/swagger.json',
-    ];
+  describe('requireAuth', () => {
+    it('should successfully authenticate with valid token', async () => {
+      const mockDecoded = {
+        id: 1,
+        role: 'user' as const,
+      };
+      mockRequest.headers = {
+        authorization: 'Bearer valid.jwt.token',
+      };
+      mockVerifyToken.mockReturnValue(mockDecoded);
 
-    exemptRoutes.forEach(route => {
-      it(`should allow access to ${route} without token`, async () => {
-        req.path = route;
+      await requireAuth(mockRequest as Request, mockResponse as Response, nextFunction);
 
-        await authMiddleware(req as RequestWithUser, res as Response, next);
+      expect(mockVerifyToken).toHaveBeenCalledWith('valid.jwt.token');
+      expect(mockRequest.userId).toBe(mockDecoded.id);
+      expect(mockRequest.userRole).toBe(mockDecoded.role);
+      expect(nextFunction).toHaveBeenCalledWith();
+    });
 
-        expect(next).toHaveBeenCalledWith();
+    it('should throw 401 error if no authorization header', async () => {
+      mockRequest.headers = {};
+
+      await requireAuth(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(HttpException));
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Authentication required. No token provided.');
+      expect(mockVerifyToken).not.toHaveBeenCalled();
+    });
+
+    it('should throw 401 error if authorization header does not start with Bearer', async () => {
+      mockRequest.headers = {
+        authorization: 'Basic dXNlcjpwYXNz',
+      };
+
+      await requireAuth(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(HttpException));
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Authentication required. No token provided.');
+      expect(mockVerifyToken).not.toHaveBeenCalled();
+    });
+
+    it('should throw 401 error if token is null string', async () => {
+      mockRequest.headers = {
+        authorization: 'Bearer null',
+      };
+
+      await requireAuth(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(HttpException));
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Authentication required. No token provided.');
+      expect(mockVerifyToken).not.toHaveBeenCalled();
+    });
+
+    it('should throw 401 error if token verification fails', async () => {
+      mockRequest.headers = {
+        authorization: 'Bearer invalid.token',
+      };
+      mockVerifyToken.mockImplementation(() => {
+        throw new Error('Invalid token');
       });
-    });
-  });
 
-  describe('token validation', () => {
-    it('should fail when no authorization header provided', async () => {
-      await authMiddleware(req as RequestWithUser, res as Response, next);
+      await requireAuth(mockRequest as Request, mockResponse as Response, nextFunction);
 
-      expect(next).toHaveBeenCalledWith(expect.any(HttpException));
-    });
-
-    it('should fail with invalid token format', async () => {
-      req.headers = { authorization: 'InvalidFormat' };
-
-      await authMiddleware(req as RequestWithUser, res as Response, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(HttpException));
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(HttpException));
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Authentication failed');
     });
 
-    it('should fail with "null" token', async () => {
-      req.headers = { authorization: 'Bearer null' };
+    it('should throw 401 error if decoded token is a string', async () => {
+      mockRequest.headers = {
+        authorization: 'Bearer valid.token',
+      };
+      mockVerifyToken.mockReturnValue('string-token');
 
-      await authMiddleware(req as RequestWithUser, res as Response, next);
+      await requireAuth(mockRequest as Request, mockResponse as Response, nextFunction);
 
-      expect(next).toHaveBeenCalledWith(expect.any(HttpException));
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(HttpException));
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Invalid token payload');
     });
 
-    it('should succeed with valid token', async () => {
-      const payload = { id: 1, email: 'test@example.com' };
-      const token = jwt.sign(payload, 'test-jwt-secret', { expiresIn: '1h' });
-      req.headers = { authorization: `Bearer ${token}` };
+    it('should throw 401 error if decoded token is missing required fields', async () => {
+      mockRequest.headers = {
+        authorization: 'Bearer valid.token',
+      };
+      mockVerifyToken.mockReturnValue({ id: 1 } as any); // Missing role
 
-      await authMiddleware(req as RequestWithUser, res as Response, next);
+      await requireAuth(mockRequest as Request, mockResponse as Response, nextFunction);
 
-      expect(next).toHaveBeenCalledWith();
-      expect(req.userId).toBe(1);
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(HttpException));
+      const error = (nextFunction as jest.Mock).mock.calls[0][0];
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Invalid token payload');
     });
 
-    it('should fail with expired token', async () => {
-      const payload = { id: 1, email: 'test@example.com' };
-      const expiredToken = jwt.sign(payload, 'test-jwt-secret', { expiresIn: '1ms' });
+    it('should pass HttpException through if verifyToken throws one', async () => {
+      mockRequest.headers = {
+        authorization: 'Bearer expired.token',
+      };
+      const httpException = new HttpException(401, 'Token expired');
+      mockVerifyToken.mockImplementation(() => {
+        throw httpException;
+      });
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await requireAuth(mockRequest as Request, mockResponse as Response, nextFunction);
 
-      req.headers = { authorization: `Bearer ${expiredToken}` };
-
-      await authMiddleware(req as RequestWithUser, res as Response, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(HttpException));
-    });
-
-    it('should fail with invalid token signature', async () => {
-      const payload = { id: 1, email: 'test@example.com' };
-      const wrongToken = jwt.sign(payload, 'wrong-secret', { expiresIn: '1h' });
-      req.headers = { authorization: `Bearer ${wrongToken}` };
-
-      await authMiddleware(req as RequestWithUser, res as Response, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(HttpException));
-    });
-  });
-
-  describe('schema handling', () => {
-    it('should use public schema by default', async () => {
-      const payload = { id: 1, email: 'test@example.com' };
-      const token = jwt.sign(payload, 'test-jwt-secret', { expiresIn: '1h' });
-      req.headers = { authorization: `Bearer ${token}` };
-
-      await authMiddleware(req as RequestWithUser, res as Response, next);
-
-      expect(next).toHaveBeenCalledWith();
-    });
-
-    it('should use requested schema if valid', async () => {
-      const payload = { id: 1, email: 'test@example.com' };
-      const token = jwt.sign(payload, 'test-jwt-secret', { expiresIn: '1h' });
-      req.headers = { authorization: `Bearer ${token} tenant1` };
-
-      await authMiddleware(req as RequestWithUser, res as Response, next);
-
-      expect(next).toHaveBeenCalledWith();
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle JWT secret not configured', async () => {
-      delete process.env.JWT_SECRET;
-
-      const token = jwt.sign({ id: 1 }, 'any-secret', { expiresIn: '1h' });
-      req.headers = { authorization: `Bearer ${token}` };
-
-      await authMiddleware(req as RequestWithUser, res as Response, next);
-
-      expect(next).toHaveBeenCalledWith(expect.any(HttpException));
+      expect(nextFunction).toHaveBeenCalledWith(httpException);
     });
   });
 });

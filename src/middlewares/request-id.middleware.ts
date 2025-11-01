@@ -1,10 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as generateUuid } from '../utils/uuid';
-
-// Extend Request interface to include requestId
-export interface RequestWithId extends Request {
-  requestId: string;
-}
+import { RequestWithId } from '../interfaces/request.interface';
 
 /**
  * Request ID middleware for distributed tracing

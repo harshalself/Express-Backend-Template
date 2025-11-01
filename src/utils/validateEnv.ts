@@ -13,13 +13,8 @@ export const validateEnv = () => {
     JWT_SECRET: str(),
     PORT: port(),
 
-    // Database configuration
-    DB_HOST: str(),
-    DB_USER: str(),
-    DB_PASSWORD: str(),
-    DB_DATABASE: str(),
-    DB_PORT: num(),
-    SCHEMA_NAME: str(),
+    // Database configuration - using DATABASE_URL for connection
+    DATABASE_URL: str(),
 
     // Redis configuration
     REDIS_HOST: str(),

@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import { z } from 'zod';
-import HttpException from '../utils/HttpException';
+import HttpException from '../utils/httpException';
 import { logger } from '../utils/logger';
 
 type ValidationTarget = 'body' | 'query' | 'params';
@@ -25,8 +25,8 @@ const validationMiddleware = (
           .map(issue => `${issue.path.join('.')}: ${issue.message}`)
           .join(', ');
 
-        // Log validation failure for debugging
-        logger.debug('Validation failed', {
+        // Log validation failure for monitoring
+        logger.info('Validation failed', {
           target,
           path: req.path,
           errors: result.error.issues,
@@ -37,7 +37,18 @@ const validationMiddleware = (
       }
 
       // Replace the request property with the validated and sanitized data
-      req[target] = result.data;
+      // Use Object.defineProperty for query/params as they might be readonly
+      if (target === 'query' || target === 'params') {
+        Object.defineProperty(req, target, {
+          value: result.data,
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
+      } else {
+        req[target] = result.data;
+      }
+
       next();
     } catch (error) {
       // Log unexpected validation errors

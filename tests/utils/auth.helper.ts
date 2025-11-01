@@ -2,11 +2,13 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { dbHelper } from './database.helper';
 import { TestUser } from './factories';
+import { users } from '../../src/features/user/user.schema';
+import { UserRole } from '../../src/features/user/user.schema';
 
 export class AuthTestHelper {
-  static generateJwtToken(userId: number, email: string): string {
+  static generateJwtToken(userId: number, email: string, role: string = 'user'): string {
     const secret = process.env.JWT_SECRET || 'test-jwt-secret';
-    return jwt.sign({ id: userId, email }, secret, { expiresIn: '24h' });
+    return jwt.sign({ id: userId, email, role }, secret, { expiresIn: '24h' });
   }
 
   static async hashPassword(password: string): Promise<string> {
@@ -14,26 +16,29 @@ export class AuthTestHelper {
   }
 
   static async createTestUser(userData: TestUser): Promise<{
-    user: { id: number; email: string; name: string };
+    user: { id: number; email: string; name: string; role: string };
     token: string;
   }> {
     const hashedPassword = await this.hashPassword(userData.password);
 
     const [user] = await dbHelper
-      .getDb()('users')
-      .insert({
-        ...userData,
+      .getDb()
+      .insert(users)
+      .values({
+        email: userData.email,
+        name: userData.name,
         password: hashedPassword,
+        role: (userData.role || 'user') as UserRole,
         created_by: 1,
       })
-      .returning('*');
+      .returning();
 
-    const token = this.generateJwtToken(user.id, user.email);
+    const token = this.generateJwtToken(user.id, user.email, user.role);
     return { user, token };
   }
 
   static async createTestUserWithToken(): Promise<{
-    user: { id: number; email: string; name: string };
+    user: { id: number; email: string; name: string; role: string };
     token: string;
     rawPassword: string;
   }> {

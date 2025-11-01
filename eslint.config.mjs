@@ -13,4 +13,10 @@ export default [
     },
   },
   ...tseslint.configs.recommended,
+  {
+    files: ['**/tests/**/*.ts', '**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ];

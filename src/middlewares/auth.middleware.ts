@@ -1,93 +1,115 @@
 import { NextFunction, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import HttpException from '../utils/HttpException';
+import HttpException from '../utils/httpException';
 import { logger } from '../utils/logger';
-import { DataStoredInToken, RequestWithUser } from '../interfaces/auth.interface';
+import { DataStoredInToken, RequestWithUser } from '../interfaces/request.interface';
+import { verifyToken } from '../utils/jwt';
 
-// Initialize DB connection once
-let DB: import('knex').Knex | null = null;
-const initDB = async (): Promise<import('knex').Knex> => {
-  if (!DB) {
-    const { default: database } = await import('../../database/index.schema');
-    DB = database;
-  }
-  return DB;
-};
-
-// Define allowed database schemas to prevent SQL injection
-const ALLOWED_SCHEMAS = ['public', 'tenant1', 'tenant2', 'admin'];
-
-// Define routes that don't require authentication
-const EXEMPT_ROUTES = ['/users/register', '/users/login', '/health', '/api-docs', '/api-docs.json'];
-
-// Helper function to check if route is exempt from authentication
-const isExemptRoute = (path: string): boolean => {
-  return EXEMPT_ROUTES.includes(path) || path.startsWith('/api-docs');
-};
-
-// Helper function to parse bearer token
-const parseBearerToken = (
-  authHeader: string | undefined
-): { token: string | null; schema: string } => {
-  if (!authHeader) {
-    return { token: null, schema: 'public' };
-  }
-
-  const parts = authHeader.split(' ');
-  const token = parts[1];
-  const schema = parts[2] || 'public';
-
-  return {
-    token: token && token !== 'null' ? token : null,
-    schema: ALLOWED_SCHEMAS.includes(schema) ? schema : 'public',
-  };
-};
-
-// Helper function to set database schema
-const setDatabaseSchema = async (schema: string): Promise<void> => {
-  const db = await initDB();
-  await db.raw('SET search_path TO ??', [schema]);
-};
-
-const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+/**
+ * Authentication middleware - requires valid JWT token
+ */
+export const requireAuth = async (req: RequestWithUser, res: Response, next: NextFunction) => {
   try {
-    // Check if the current route is exempt from authentication
-    if (isExemptRoute(req.path)) {
-      await setDatabaseSchema('public');
-      return next();
+    const authHeader = req.headers['authorization'];
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    const clientIP = req.ip || req.connection?.remoteAddress || 'Unknown';
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.warn('Authentication failed: Missing or invalid authorization header', {
+        ip: clientIP,
+        userAgent,
+        url: req.originalUrl,
+        method: req.method,
+      });
+      return next(new HttpException(401, 'Authentication required. No token provided.'));
     }
 
-    const { token, schema } = parseBearerToken(req.headers['authorization']);
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-    if (!token) {
-      return next(new HttpException(401, 'Authentication token missing'));
+    if (!token || token === 'null') {
+      logger.warn('Authentication failed: Null token provided', {
+        ip: clientIP,
+        userAgent,
+        url: req.originalUrl,
+        method: req.method,
+      });
+      return next(new HttpException(401, 'Authentication required. No token provided.'));
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      return next(new HttpException(500, 'JWT secret not configured'));
+    const verificationResponse = verifyToken(token);
+
+    // Validate token payload structure
+    if (typeof verificationResponse === 'string') {
+      logger.warn('Authentication failed: Invalid token payload structure', {
+        ip: clientIP,
+        userAgent,
+        url: req.originalUrl,
+        method: req.method,
+      });
+      return next(new HttpException(401, 'Invalid token payload'));
     }
 
-    const verificationResponse = jwt.verify(token, secret) as DataStoredInToken;
+    const decoded = verificationResponse as DataStoredInToken;
 
-    // Set database schema and attach user ID to request
-    await setDatabaseSchema(schema);
-    req.userId = verificationResponse.id;
+    // Validate required fields exist
+    if (!decoded.id || !decoded.role) {
+      logger.warn('Authentication failed: Missing required token fields', {
+        ip: clientIP,
+        userAgent,
+        url: req.originalUrl,
+        method: req.method,
+        decodedFields: Object.keys(decoded),
+      });
+      return next(new HttpException(401, 'Invalid token payload'));
+    }
+
+    // Attach user information to request
+    req.userId = decoded.id;
+    req.userRole = decoded.role;
+    req.userAgent = userAgent;
+    req.clientIP = clientIP;
+
+    // Log successful authentication
+    logger.info('Authentication successful', {
+      userId: decoded.id,
+      userRole: decoded.role,
+      ip: clientIP,
+      userAgent: userAgent.substring(0, 100), // Truncate for logging
+      url: req.originalUrl,
+      method: req.method,
+    });
 
     next();
   } catch (error) {
-    // Log the actual error for debugging (but don't expose to client)
-    logger.error('Auth middleware error:', error);
+    logger.error('Auth middleware error:', {
+      error: error.message,
+      stack: error.stack,
+      ip: req.ip || req.connection?.remoteAddress || 'Unknown',
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      url: req.originalUrl,
+      method: req.method,
+    });
 
-    // Provide more specific error messages based on JWT errors
-    if (error instanceof jwt.JsonWebTokenError) {
-      next(new HttpException(401, 'Invalid authentication token'));
-    } else if (error instanceof jwt.TokenExpiredError) {
-      next(new HttpException(401, 'Authentication token expired'));
-    } else {
-      next(new HttpException(401, 'Authentication failed'));
+    // If it's already an HttpException, pass it through
+    if (error instanceof HttpException) {
+      return next(error);
     }
+
+    // Handle specific JWT errors
+    if (error.name === 'TokenExpiredError') {
+      return next(new HttpException(401, 'Token expired'));
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      return next(new HttpException(401, 'Invalid token'));
+    }
+
+    if (error.name === 'NotBeforeError') {
+      return next(new HttpException(401, 'Token not active'));
+    }
+
+    // Generic auth error for other cases
+    next(new HttpException(401, 'Authentication failed'));
   }
 };
 
-export default authMiddleware;
+export default requireAuth;

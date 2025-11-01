@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import validationMiddleware from '../../src/middlewares/validation.middleware';
-import HttpException from '../../src/utils/HttpException';
+import HttpException from '../../src/utils/httpException';
 
 describe('Validation Middleware', () => {
   let req: Partial<Request>;

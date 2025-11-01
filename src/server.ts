@@ -2,33 +2,44 @@ import App from './app';
 import { logger } from './utils/logger';
 import { validateEnv } from './utils/validateEnv';
 import UserRoute from './features/user/user.route';
-import BaseSourceRoute from './features/source/source.route';
-import FileSourceRoute from './features/source/file/file-source.route';
-import TextSourceRoute from './features/source/text/text-source.route';
-import { testDbConnection } from './utils/testdbConnection';
+import AuthRoute from './features/auth/auth.route';
+import UploadRoute from './features/upload/upload.route';
+import { checkDatabaseHealth } from './database/health';
+import { pool } from './database/drizzle';
+import { redisClient } from './utils/redis';
+import { setupGracefulShutdown } from './utils/gracefulShutdown';
 
 validateEnv();
+
+let server: import('http').Server;
 
 async function bootstrap() {
   try {
     logger.info('🚀 Starting Express Backend Template...');
 
     // Check DB connection
-    await testDbConnection();
+    const health = await checkDatabaseHealth();
+    if (health.status === 'unhealthy') {
+      throw new Error(`Database health check failed: ${health.message}`);
+    }
+    logger.info('✅ Database connected', { poolStats: health.details.poolStats });
 
     // Initialize Redis connection (optional - skip for now)
     logger.info('ℹ️ Redis connection skipped during startup (optional service)');
     // await testRedisConnection();
 
     // Start Express app
-    const app = new App([
-      new UserRoute(),
-      new BaseSourceRoute(),
-      new FileSourceRoute(),
-      new TextSourceRoute(),
-    ]);
+    const app = new App([new AuthRoute(), new UserRoute(), new UploadRoute()]);
 
-    app.listen();
+    server = app.listen();
+
+    // Setup graceful shutdown with resources
+    setupGracefulShutdown({
+      server,
+      database: pool,
+      redis: redisClient,
+    });
+
     logger.info('✅ Express Backend Template started successfully!');
   } catch (error) {
     logger.error('App failed to start: ' + (error && error.stack ? error.stack : error));

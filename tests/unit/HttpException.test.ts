@@ -4,7 +4,7 @@ import HttpException, {
   AuthorizationException,
   NotFoundError,
   ConflictError,
-} from '../../src/utils/HttpException';
+} from '../../src/utils/httpException';
 
 describe('HttpException', () => {
   it('should create basic exception', () => {

@@ -13,9 +13,10 @@
     "outDir": "./build",
     "allowJs": true,
     "noEmit": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
-  "include": ["./src/**/*", ".env"],
+  "include": ["./src/**/*", ".env", "swagger-docs/swagger.interface.ts"],
 
   "exclude": ["node_modules", "dist", "**/*.njk"]
 }
