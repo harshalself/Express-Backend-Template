@@ -6,7 +6,16 @@ import { users } from '../../src/features/user/user.schema';
 import { UserRole } from '../../src/features/user/user.schema';
 
 export class AuthTestHelper {
+  /**
+   * Generate a JWT token for testing purposes
+   * @param userId - User ID
+   * @param email - User email
+   * @param role - User role (default: 'user')
+   * @returns JWT token
+   * @note Uses test-jwt-secret as fallback for testing only. Never use in production.
+   */
   static generateJwtToken(userId: number, email: string, role: string = 'user'): string {
+    // Fallback secret is only for testing - production requires JWT_SECRET env var
     const secret = process.env.JWT_SECRET || 'test-jwt-secret';
     return jwt.sign({ id: userId, email, role }, secret, { expiresIn: '24h' });
   }
@@ -57,7 +66,14 @@ export class AuthTestHelper {
     return { Authorization: `Bearer ${token}` };
   }
 
+  /**
+   * Verify a JWT token for testing purposes
+   * @param token - JWT token to verify
+   * @returns Decoded token payload
+   * @note Uses test-jwt-secret as fallback for testing only. Never use in production.
+   */
   static verifyToken(token: string): { id: number; email: string; iat: number; exp: number } {
+    // Fallback secret is only for testing - production requires JWT_SECRET env var
     const secret = process.env.JWT_SECRET || 'test-jwt-secret';
     return jwt.verify(token, secret) as { id: number; email: string; iat: number; exp: number };
   }

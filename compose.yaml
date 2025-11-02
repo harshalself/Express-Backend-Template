@@ -1,10 +1,25 @@
+# Docker Compose configuration for Express Backend Template
+#
+# SECURITY NOTICE:
+# - This file references .env for environment variables
+# - NEVER commit .env files with actual secrets to version control
+# - Use .env.example as a template and create your own .env file
+# - Ensure .env is listed in .gitignore
+# - For production, use Docker secrets or secure secret management solutions
+#
+# Required environment variables (see .env.example):
+# - JWT_SECRET: Minimum 32 characters for security
+# - DATABASE_URL: PostgreSQL connection string
+# - AWS_ACCESS_KEY, AWS_SECRET_KEY: AWS S3 credentials
+# - REDIS_PASSWORD: Redis authentication (if using Redis)
+# - EMAIL_USER, EMAIL_PASSWORD: Email service credentials
 
 services:
   server:
     build:
       context: .
     env_file:
-      - .env
+      - .env  # Contains secrets - ensure this file is in .gitignore
     ports:
       - 8000:8000
     depends_on: []
