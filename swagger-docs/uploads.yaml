@@ -1,0 +1,570 @@
+# Upload API Documentation
+# This file contains file upload API paths and schemas
+
+paths:
+  /uploads:
+    get:
+      tags:
+        - Uploads
+      summary: Get all uploads for authenticated user
+      description: Retrieve paginated list of uploads with optional filtering (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by upload status
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+          example: 'completed'
+        - name: mime_type
+          in: query
+          description: Filter by MIME type
+          schema:
+            type: string
+          example: 'image/jpeg'
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 10
+        - name: sort_by
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [created_at, file_size, original_filename]
+            default: created_at
+          example: 'created_at'
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          example: 'desc'
+      responses:
+        '200':
+          description: Uploads retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Uploads retrieved successfully'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Upload'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total:
+                        type: integer
+                        example: 45
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Uploads
+      summary: Upload a file
+      description: Upload a file to S3 and create upload record (requires authentication)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload (max 10MB)
+            encoding:
+              file:
+                contentType: image/jpeg, image/png, application/pdf, text/plain, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      responses:
+        '201':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'File uploaded successfully'
+                  data:
+                    $ref: '#/components/schemas/Upload'
+        '400':
+          description: No file uploaded or invalid file
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /uploads/stats:
+    get:
+      tags:
+        - Uploads
+      summary: Get upload statistics
+      description: Get upload statistics for the authenticated user (requires authentication)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Upload statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Upload statistics retrieved successfully'
+                  data:
+                    $ref: '#/components/schemas/UploadStats'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /uploads/status/{status}:
+    get:
+      tags:
+        - Uploads
+      summary: Get uploads by status
+      description: Retrieve all uploads with a specific status for authenticated user (requires authentication)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: path
+          required: true
+          description: Upload status to filter by
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+          example: 'completed'
+      responses:
+        '200':
+          description: Uploads retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Uploads with status 'completed' retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Upload'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /uploads/{id}:
+    get:
+      tags:
+        - Uploads
+      summary: Get upload by ID
+      description: Retrieve a specific upload by its ID (requires authentication and ownership)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Upload ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Upload retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Upload retrieved successfully'
+                  data:
+                    $ref: '#/components/schemas/Upload'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Upload not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Uploads
+      summary: Update upload
+      description: Update an existing upload (requires authentication and ownership)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Upload ID
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUploadRequest'
+            examples:
+              update_upload:
+                summary: Update upload status
+                value:
+                  filename: 'renamed-document.pdf'
+                  status: 'completed'
+      responses:
+        '200':
+          description: Upload updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Upload updated successfully'
+                  data:
+                    $ref: '#/components/schemas/Upload'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Upload not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Uploads
+      summary: Delete upload
+      description: Delete an upload (requires authentication and ownership)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Upload ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Upload deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Upload deleted successfully'
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Upload not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /uploads/{id}/download:
+    get:
+      tags:
+        - Uploads
+      summary: Download file
+      description: Download the file associated with an upload from S3 (requires authentication and ownership)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Upload ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: File download successful
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Upload not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Upload:
+      type: object
+      required:
+        - id
+        - user_id
+        - filename
+        - original_filename
+        - mime_type
+        - file_size
+        - file_path
+        - file_url
+        - status
+        - created_by
+        - created_at
+        - updated_at
+        - is_deleted
+      properties:
+        id:
+          type: integer
+          description: Upload unique identifier
+          example: 1
+        user_id:
+          type: integer
+          description: ID of the user who owns this upload
+          example: 1
+        filename:
+          type: string
+          description: Sanitized filename (stored name)
+          example: 'document_2025.pdf'
+        original_filename:
+          type: string
+          description: Original filename from upload
+          example: 'My Document 2025.pdf'
+        mime_type:
+          type: string
+          description: MIME type of the file
+          example: 'application/pdf'
+        file_size:
+          type: integer
+          description: File size in bytes
+          example: 524288
+        file_path:
+          type: string
+          description: S3 key/path to the file
+          example: 'uploads/user-1/1699123456789-document.pdf'
+        file_url:
+          type: string
+          description: Public URL to access the file
+          example: 'https://bucket-name.s3.amazonaws.com/uploads/user-1/1699123456789-document.pdf'
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: Upload processing status
+          example: 'completed'
+        error_message:
+          type: string
+          nullable: true
+          description: Error message if upload failed
+          example: null
+        created_by:
+          type: integer
+          description: ID of user who created the upload
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Upload creation timestamp
+          example: '2025-11-02T10:30:00.000Z'
+        updated_by:
+          type: integer
+          nullable: true
+          description: ID of user who last updated the upload
+          example: 1
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-11-02T10:30:00.000Z'
+        is_deleted:
+          type: boolean
+          description: Whether the upload is soft deleted
+          example: false
+        deleted_by:
+          type: integer
+          nullable: true
+          description: ID of user who deleted the upload
+          example: null
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deletion timestamp
+          example: null
+
+    UpdateUploadRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+          description: Updated filename
+          example: 'renamed-document.pdf'
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: Updated status
+          example: 'completed'
+        error_message:
+          type: string
+          description: Error message (if status is failed)
+          example: 'Processing failed due to invalid format'
+
+    UploadStats:
+      type: object
+      properties:
+        total_uploads:
+          type: integer
+          description: Total number of uploads
+          example: 45
+        total_size:
+          type: integer
+          description: Total size of all uploads in bytes
+          example: 52428800
+        by_status:
+          type: object
+          properties:
+            pending:
+              type: integer
+              example: 2
+            processing:
+              type: integer
+              example: 1
+            completed:
+              type: integer
+              example: 40
+            failed:
+              type: integer
+              example: 2
+        by_mime_type:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            'application/pdf': 25
+            'image/jpeg': 15
+            'image/png': 5
