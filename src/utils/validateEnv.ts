@@ -16,10 +16,10 @@ export const validateEnv = () => {
     // Database configuration - using DATABASE_URL for connection
     DATABASE_URL: str(),
 
-    // Redis configuration
-    REDIS_HOST: str(),
-    REDIS_PORT: num(),
-    REDIS_PASSWORD: str(),
+    // Redis configuration (optional)
+    REDIS_HOST: str({ default: '' }),
+    REDIS_PORT: num({ default: 6379 }),
+    REDIS_PASSWORD: str({ default: '' }),
 
     // AWS S3 configuration
     AWS_ACCESS_KEY: str(),

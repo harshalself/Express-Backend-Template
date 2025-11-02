@@ -24,7 +24,7 @@ class SwaggerConfig {
   private loadSwaggerDocument(): void {
     try {
       // Enhanced YAML parse error logging for main swagger.yaml
-      const swaggerPath = path.join(__dirname, 'swagger.yaml');
+      const swaggerPath = path.join(__dirname, '../docs/swagger.yaml');
       try {
         this.swaggerDocument = parseYaml(fs.readFileSync(swaggerPath, 'utf8'));
       } catch (err: unknown) {
@@ -40,7 +40,7 @@ class SwaggerConfig {
           );
         }
         logger.error(error.stack);
-        fs.appendFileSync('error.log', `[${new Date().toISOString()}] ${error.stack}\n`);
+        fs.appendFileSync('logs/error.log', `[${new Date().toISOString()}] ${error.stack}\n`);
         throw err;
       }
 
@@ -68,7 +68,7 @@ class SwaggerConfig {
       // Process each API module
       for (const module of apiModules) {
         try {
-          const modulePath = path.join(__dirname, module.path);
+          const modulePath = path.join(__dirname, '../docs', module.path);
           let moduleDoc;
           try {
             moduleDoc = parseYaml(fs.readFileSync(modulePath, 'utf8'));
@@ -85,7 +85,7 @@ class SwaggerConfig {
               );
             }
             logger.error(error.stack);
-            fs.appendFileSync('error.log', `[${new Date().toISOString()}] ${error.stack}\n`);
+            fs.appendFileSync('logs/error.log', `[${new Date().toISOString()}] ${error.stack}\n`);
             throw err;
           }
 

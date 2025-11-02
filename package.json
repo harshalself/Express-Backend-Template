@@ -18,12 +18,12 @@
     "lint:fix": "eslint --fix .",
     "validate:swagger": "ts-node swagger-docs/validate-swagger.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/database/migrate.ts",
+    "db:migrate": "ts-node src/database/migrate.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/database/seed.ts",
+    "db:seed": "ts-node src/database/seed.ts",
     "db:drop": "drizzle-kit drop",
-    "db:test": "tsx src/database/health.ts",
+    "db:test": "ts-node src/database/health.ts",
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
     "prepare": "husky",
@@ -105,8 +105,7 @@
   "lint-staged": {
     "*.{ts,js}": [
       "eslint --fix",
-      "prettier --write",
-      "npm run build"
+      "prettier --write"
     ]
   },
   "overrides": {

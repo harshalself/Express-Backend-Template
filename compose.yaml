@@ -1,0 +1,23 @@
+services:
+  server:
+    build:
+      context: .
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres.kljduujfchypnlxtsnsn:adnL38WL8vTIWnLR@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres
+      JWT_SECRET: your-super-secure-256-bit-secret-key-that-is-at-least-32-chars-long-12345
+      PORT: 8000
+      ALLOWED_ORIGINS: https://yourdomain.com,https://www.yourdomain.com
+      AWS_ACCESS_KEY: 22c8c181f445b4a646ae9805293bfc04
+      AWS_SECRET_KEY: 2178bc49f9e12187d261d3d7654c558264a31af24f6150f86d75d0312daf8668
+      AWS_BUCKET_NAME: test
+      AWS_ENDPOINT: https://kljduujfchypnlxtsnsn.storage.supabase.co/storage/v1/s3
+      AWS_REGION: ap-southeast-2
+      EMAIL_USER: adityapatil93564@gmail.com
+      EMAIL_PASSWORD: lllj jrps xbct otlp
+    ports:
+      - 8000:8000
+    depends_on: []
+    volumes:
+      - ./logs:/usr/src/app/logs
+
