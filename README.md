@@ -1,6 +1,6 @@
 # Express Backend Template
 
-A robust, production-ready Express.js backend with TypeScript, featuring user authentication, file/text content management, and modern tooling.
+A robust, production-ready Express.js backend with TypeScript, featuring user authentication with role-based access, file upload management, and modern tooling with 100% test coverage.
 
 ## 🚀 Quick Start
 
@@ -12,30 +12,40 @@ npm run dev
 
 ## 📋 Features
 
-- **Authentication**: JWT-based user registration/login
-- **File Management**: PDF, DOC, DOCX, TXT upload with text extraction
-- **Text Content**: CRUD operations for plain text sources
-- **Database**: PostgreSQL with Knex.js migrations
+- **Authentication**: JWT-based user registration/login with role-based access
+- **File Management**: PDF, DOC, DOCX upload with S3 storage
+- **User Management**: CRUD operations for users with admin controls
+- **Database**: PostgreSQL with Drizzle ORM migrations
 - **Storage**: AWS S3 compatible (Supabase)
 - **Caching**: Optional Redis integration
 - **Security**: Rate limiting, CORS, input validation, helmet
 - **Documentation**: Modular Swagger/OpenAPI 3.0
-- **Testing**: Jest with unit/integration tests
+- **Testing**: Jest with unit/integration tests (104 tests)
 - **Docker**: Multi-stage builds for dev/prod
 
 ## 🗂️ API Endpoints
 
 ### Public
 
-- `POST /api/v1/users/register` - User registration
-- `POST /api/v1/users/login` - User login
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
+- `POST /auth/refresh-token` - Refresh JWT token
+- `POST /auth/logout` - User logout
 
 ### Protected
 
-- `GET /api/v1/users` - List users
-- `GET /api/v1/sources/agent/:agentId` - Get sources
-- `POST /api/v1/sources/file` - Upload files
-- `POST /api/v1/sources/text` - Create text sources
+- `GET /users` - List all users (admin only)
+- `GET /users/:id` - Get user by ID
+- `PUT /users/:id` - Update user
+- `DELETE /users/:id` - Delete user (admin only)
+- `GET /uploads` - List user uploads
+- `GET /uploads/stats` - Get upload statistics
+- `GET /uploads/status/:status` - Get uploads by status
+- `POST /uploads` - Upload file
+- `GET /uploads/:id` - Get upload by ID
+- `GET /uploads/:id/download` - Download file
+- `PUT /uploads/:id` - Update upload
+- `DELETE /uploads/:id` - Delete upload
 
 ### System
 
@@ -44,13 +54,11 @@ npm run dev
 ## 🗄️ Database Schema
 
 ```sql
-users (id, name, email, password, phone_number, audit_fields)
-sources (id, user_id, source_type, name, status, is_embedded, audit_fields)
-file_sources (id, source_id, file_url, mime_type, text_content, audit_fields)
-text_sources (id, source_id, content, audit_fields)
+users (id, name, email, password, phone_number, role, audit_fields)
+uploads (id, user_id, filename, original_filename, mime_type, file_size, file_path, file_url, status, error_message, audit_fields)
 ```
 
-**Features**: Audit fields, soft deletes, referential integrity, embedding support.
+**Features**: Audit fields, soft deletes, referential integrity, role-based access, upload status tracking.
 
 ## ⚙️ Environment Setup
 
@@ -58,11 +66,8 @@ Create `.env` with:
 
 ```bash
 JWT_SECRET=your-256-bit-secret
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 PORT=8000
-DB_HOST=postgres-host
-DB_USER=db-user
-DB_PASSWORD=db-password
-DB_DATABASE=db-name
 REDIS_HOST=redis-host (optional)
 AWS_ACCESS_KEY=key
 AWS_SECRET_KEY=secret
@@ -76,15 +81,16 @@ AWS_BUCKET_NAME=bucket
 ```
 src/
 ├── app.ts, server.ts     # App setup and bootstrap
-├── features/             # User and source management
-├── middlewares/          # Auth, validation, security
-├── utils/               # Logger, redis, email, validation
+├── features/             # Feature-based modules (auth, user, upload)
+├── middlewares/          # Auth, validation, security, CORS, rate-limit
+├── utils/               # Logger, JWT, Redis, S3 upload, validators
 ├── interfaces/          # TypeScript definitions
-└── routes/              # Route definitions
+└── database/            # Drizzle schemas, migrations, seed, health
 
-database/                # Schemas and migrations
-docs/                    # Swagger documentation
+build/                   # Compiled TypeScript output
+swagger-docs/            # OpenAPI specifications
 tests/                   # Unit and integration tests
+logs/                    # Application logs (error, info)
 scripts/                 # Utility scripts
 ```
 
@@ -92,20 +98,30 @@ scripts/                 # Utility scripts
 
 ```bash
 # Development
-npm run dev              # Start dev server
+npm run dev              # Start dev server with nodemon
 npm run build           # Build for production
 npm start               # Start production server
 
 # Database
-npx ts-node database/migrate.schema.ts  # Run migrations
+npm run db:generate     # Generate Drizzle migrations
+npm run db:migrate      # Run database migrations
+npm run db:push         # Push schema changes to database
+npm run db:studio       # Open Drizzle Studio
+npm run db:seed         # Seed database with test data
+npm run db:test         # Test database connection
+npm run db:check        # Check schema drift
+npm run db:up           # Update schema to latest
 
 # Testing
-npm test                # Run all tests
-npm run test:coverage   # With coverage
+npm test                # Run all tests (104 tests)
+npm run test:unit       # Run unit tests only
+npm run test:integration # Run integration tests only
+npm run test:coverage   # Run tests with coverage
 
 # Quality
-npm run lint            # Lint code
-npm run validate:swagger # Validate docs
+npm run lint            # Lint code with ESLint
+npm run lint:fix        # Fix linting issues
+npm run validate:swagger # Validate Swagger docs
 ```
 
 ## Deployment
@@ -123,18 +139,18 @@ docker-compose -f docker-compose.prod.yml up -d
 ### Production Checklist
 
 - [ ] Configure `.env.prod`
-- [ ] Run database migrations
+- [ ] Run database migrations: `npm run db:migrate`
 - [ ] Setup SSL certificates
 - [ ] Configure monitoring
 
 ## 🔧 Tech Stack
 
 - **Runtime**: Node.js 18+, Express 5.x, TypeScript 5.7+
-- **Database**: PostgreSQL + Knex.js
-- **Auth**: JWT + bcrypt
+- **Database**: PostgreSQL + Drizzle ORM
+- **Auth**: JWT + bcrypt + role-based access
 - **Validation**: Zod schemas
 - **Storage**: AWS S3 SDK v3
-- **Testing**: Jest + SWC + V8 coverage
+- **Testing**: Jest + SWC + V8 coverage (104 tests)
 - **Linting**: ESLint 9 + Prettier 3
 - **Docker**: Multi-stage Alpine builds
 

@@ -106,7 +106,7 @@
     "*.{ts,js}": [
       "eslint --fix",
       "prettier --write",
-      "jest --bail --findRelatedTests --passWithNoTests"
+      "npm run build"
     ]
   },
   "overrides": {
