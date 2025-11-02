@@ -47,20 +47,16 @@ class SwaggerConfig {
       // Load and integrate module-specific API docs
       const apiModules = [
         {
-          name: 'Sources',
-          path: 'sources.yaml',
-        },
-        {
-          name: 'File Sources',
-          path: 'file-sources.yaml',
-        },
-        {
-          name: 'Text Sources',
-          path: 'text-sources.yaml',
+          name: 'Authentication',
+          path: 'auth.yaml',
         },
         {
           name: 'Users',
           path: 'users.yaml',
+        },
+        {
+          name: 'Uploads',
+          path: 'uploads.yaml',
         },
         { name: 'System', path: 'system.yaml' },
       ];

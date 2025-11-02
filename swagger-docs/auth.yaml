@@ -1,0 +1,254 @@
+# Authentication API Documentation
+# This file contains authentication API paths and schemas
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account (public endpoint - no authentication required)
+      security:
+        - {} # No security required
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+            examples:
+              new_user:
+                summary: New user registration
+                value:
+                  name: 'Alice Example'
+                  email: 'alice@example.com'
+                  phone_number: '+1122334455'
+                  password: 'SecurePassword123!'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'User registered successfully'
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input data or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and get access token (public endpoint - no authentication required)
+      security:
+        - {} # No security required
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              login:
+                summary: User login
+                value:
+                  email: 'john.doe@example.com'
+                  password: 'SecurePassword123!'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Login successful'
+                  data:
+                    $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh-token:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get a new access token using a refresh token (public endpoint - no authentication required)
+      security:
+        - {} # No security required
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+            examples:
+              refresh:
+                summary: Refresh token
+                value:
+                  refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Token refreshed successfully'
+                  data:
+                    $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Logout the current user (public endpoint - client-side token removal)
+      security:
+        - {} # No security required
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Logout successful'
+                  data:
+                    type: object
+                    nullable: true
+                    example: null
+
+components:
+  schemas:
+    UserRegistrationRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: 'Alice Example'
+        email:
+          type: string
+          format: email
+          example: 'alice@example.com'
+        phone_number:
+          type: string
+          example: '+1122334455'
+        password:
+          type: string
+          minLength: 8
+          example: 'SecurePassword123!'
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+        password:
+          type: string
+          example: 'SecurePassword123!'
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        accessToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        refreshToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'John Doe'
+        email:
+          type: string
+          example: 'john.doe@example.com'
+        phone_number:
+          type: string
+          nullable: true
+          example: '+1234567890'
+        role:
+          type: string
+          example: 'user'
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-07-25T10:30:00.000Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-07-25T10:30:00.000Z'
