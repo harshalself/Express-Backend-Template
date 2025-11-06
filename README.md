@@ -2,6 +2,8 @@
 
 A robust, production-ready Express.js backend with TypeScript, featuring user authentication with role-based access, file upload management, and modern tooling with 100% test coverage.
 
+![API Documentation Screenshot](./Screenshot.png)
+
 ## 🚀 Quick Start
 
 ```bash
